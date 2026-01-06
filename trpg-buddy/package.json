@@ -1,0 +1,18 @@
+{
+  "name": "trpg-buddy",
+  "version": "0.1.0",
+  "description": "記憶のカケラを辿る、バディ同行型・生成AI TRPG",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.22.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "vite": "^5.0.8"
+  }
+}

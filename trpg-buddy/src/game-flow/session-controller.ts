@@ -1,0 +1,188 @@
+// World template system integrated
+
+import type { GameState, GMResponse } from '../types';
+import { EndingType } from '../types';
+import type { GeminiClient } from '../ai-gm/gemini-client';
+import type { TrustManager } from '../buddy/trust-manager';
+import { generateWorld } from '../world-templates/generator';
+import { SceneManager } from '../scene-management/scene-manager';
+import { evaluateClearConditions, determineEndingType, shouldPreventEarlyClear } from './condition-evaluator';
+
+export class SessionController {
+    private sceneManager: SceneManager;
+
+    constructor(
+        private geminiClient: GeminiClient,
+        private trustManager: TrustManager
+    ) {
+        this.sceneManager = new SceneManager();
+    }
+
+    async startNewSession(sessionNumber: number, playerName: string = 'プレイヤー'): Promise<GameState> {
+        console.log(`SessionController: Starting session ${sessionNumber} for ${playerName}...`);
+
+        // Generate actual world from templates
+        const currentWorld = generateWorld();
+
+        console.log(`SessionController: Generated world "${currentWorld.name}"`);
+        console.log(`  Abnormalities: ${currentWorld.abnormalityTags.join(', ')}`);
+        console.log(`  Themes: ${currentWorld.themeTags.join(', ')}`);
+
+        // Create initial scene
+        const initialScene = this.sceneManager.createInitialScene(currentWorld.name);
+        console.log(`SessionController: Starting with scene "${initialScene.name}"`);
+
+        const gameState: GameState = {
+            sessionNumber,
+            turnNumber: 1,
+            cumulativeProgression: 0,
+            currentScene: initialScene,
+            currentWorld,
+            buddy: {
+                name: 'アリア',
+                trustLevel: 0,
+                personalityTrait: 'curious',
+                dialogueHistory: [],
+                warnings: 0,
+                abilities: []
+            },
+            inventory: [],
+            memoryFragments: [],
+            truthProgress: {
+                collectedFragments: [],
+                unlockedRoutes: [],
+                reachedEndings: []
+            },
+            saveSlot: 1
+        };
+
+        // Generate opening scene with AI
+        const openingResponse = await this.geminiClient.generateOpening(gameState, playerName);
+
+        // Add opening to dialogue history
+        if (openingResponse.sceneDescription) {
+            gameState.buddy.dialogueHistory.push({
+                speaker: 'gm',
+                content: openingResponse.sceneDescription,
+                turn: 1
+            });
+        }
+
+        return gameState;
+    }
+
+    async processTurn(state: GameState, playerInput: string): Promise<GMResponse> {
+        console.log(`SessionController: Processing turn ${state.turnNumber}...`);
+
+        // Add player input to history
+        state.buddy.dialogueHistory.push({
+            speaker: 'player',
+            content: playerInput,
+            turn: state.turnNumber
+        });
+
+        // Get GM response from AI
+        const response = await this.geminiClient.generateResponse(state, playerInput);
+
+        // Add GM response to history
+        if (response.sceneDescription || response.buddyDialogue) {
+            state.buddy.dialogueHistory.push({
+                speaker: 'gm',
+                content: `${response.sceneDescription || ''}\n${response.buddyDialogue || ''}`,
+                turn: state.turnNumber
+            });
+        }
+
+        // Evaluate clear/fail conditions
+        const {
+            evaluateClearConditions,
+            evaluateFailConditions,
+            isAnyConditionMet,
+            shouldPreventEarlyClear
+        } = await import('./condition-evaluator');
+
+        const combinedResponse = `${response.sceneDescription || ''} ${response.buddyDialogue || ''}`;
+
+        // Accumulate progression score
+        state.cumulativeProgression += response.internalEvaluation.progressionScore;
+        console.log(`SessionController: Progression ${response.internalEvaluation.progressionScore} added. Total: ${state.cumulativeProgression}`);
+
+        // Update scene progress
+        state.currentScene = this.sceneManager.updateSceneProgress(
+            state.currentScene,
+            response.internalEvaluation.progressionScore
+        );
+
+        // Check if scene should transition
+        if (this.sceneManager.shouldTransitionScene(state.currentScene, state)) {
+            const nextScene = this.sceneManager.createNextScene(state.currentScene, state);
+            console.log(`SessionController: Scene transition ${state.currentScene.id} → ${nextScene.id} (${nextScene.name})`);
+            state.currentScene = nextScene;
+        }
+
+        // Check clear conditions
+        evaluateClearConditions(state, playerInput, combinedResponse);
+
+        // Determine if session should end (no more fail conditions, just ending determination)
+        // Breakdown is checked in determineEndingType
+        const breakdownRisk = state.buddy.trustLevel <= -70 && state.buddy.warnings >= 3;
+
+        if (breakdownRisk) {
+            // Immediate breakdown end
+            response.internalEvaluation.endingFlags = {
+                shouldEnd: true,
+                endingType: 'breakdown'
+            };
+            console.log('SessionController: Breakdown imminent!');
+        }
+
+        // Update trust level
+        state.buddy.trustLevel += response.internalEvaluation.trustChange;
+        state.buddy.trustLevel = Math.max(-100, Math.min(100, state.buddy.trustLevel));
+
+        // Check for abuse
+        const abuseCheck = this.trustManager.checkAbuseWarning(state.buddy);
+        if (abuseCheck.isBreakdown) {
+            response.internalEvaluation.endingFlags = {
+                shouldEnd: true,
+                endingType: 'breakdown'
+            };
+        } else if (abuseCheck.shouldWarn) {
+            state.buddy.warnings++;
+        }
+
+        // Check turn limit with climax extension
+        const isClimaxExtensionActive = this.shouldExtendForClimax(state);
+        const effectiveTurnLimit = isClimaxExtensionActive ? 23 : 20;
+
+        if (state.turnNumber >= effectiveTurnLimit) {
+            response.internalEvaluation.endingFlags.shouldEnd = true;
+            if (!response.internalEvaluation.endingFlags.endingType) {
+                response.internalEvaluation.endingFlags.endingType = 'fail';
+            }
+            console.log(`SessionController: Turn limit ${effectiveTurnLimit} reached. Forcing end.`);
+        } else if (state.turnNumber >= 20 && isClimaxExtensionActive) {
+            console.log(`SessionController: Climax extension active. Allowing up to turn 23.`);
+        }
+
+        return response;
+    }
+
+    private shouldExtendForClimax(state: GameState): boolean {
+        // クライマックス延長の条件:
+        // 1. ターン20以上
+        // 2. 累積進行度が70以上（クライマックスに入っている）
+        // 3. クリア条件も失敗条件も未達成（未解決）
+
+        if (state.turnNumber < 20) {
+            return false;
+        }
+
+        const isInClimax = state.cumulativeProgression >= 70;
+        const isUnresolved =
+            !state.currentWorld.clearConditions.some(c => c.met) &&
+            !state.currentWorld.failConditions.some(c => c.met);
+
+        return isInClimax && isUnresolved;
+    }
+}
