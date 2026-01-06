@@ -218,7 +218,6 @@ export class SessionController {
 
         // 2. AI GMに結果を通知して描写生成
         const narrative = await this.geminiClient.generateJudgmentNarrative(
-            state,
             pending.request,
             judgmentResult
         );
