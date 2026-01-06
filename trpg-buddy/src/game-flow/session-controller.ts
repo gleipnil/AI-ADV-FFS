@@ -56,6 +56,7 @@ export class SessionController {
                 unlockedRoutes: [],
                 reachedEndings: []
             },
+            sessionItems: [],
             saveSlot: 1
         };
 
