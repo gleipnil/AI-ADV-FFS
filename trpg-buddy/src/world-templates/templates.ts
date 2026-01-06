@@ -3,7 +3,7 @@ import type { WorldTemplate } from '../types';
 // 6つの固定世界テンプレート
 
 export const WORLD_TEMPLATES: WorldTemplate[] = [
-    // 1. 荒涼の砂漠オアシス
+    // 1. 荒涼の砂漠オアシス（読み聞かせの冒険譚の記憶）
     {
         id: 'desert_oasis',
         name: '荒涼の砂漠オアシス',
@@ -11,23 +11,89 @@ export const WORLD_TEMPLATES: WorldTemplate[] = [
             'オアシスの集落',
             '砂嵐の荒野',
             '略奪者の野営地',
-            '古代遺跡'
+            '古代遺跡',
+            '枯れた井戸',
+            '隠された水脈',
+            '中立地帯の市場'
         ],
         possibleNPCs: [
             {
                 id: 'oasis_elder',
                 name: 'オアシスの長老',
-                role: '平和な民のリーダー。知恵と調和を重んじる'
+                role: '優しい祖父のような存在。知恵と調和を重んじる。アリアの祖父の記憶？',
+                appearance: '白い髭、砂色のローブ、慈愛に満ちた目',
+                uniqueItem: {
+                    id: 'ancient_water_jar',
+                    name: '古代の水瓶',
+                    description: '水源を浄化する力を持つ聖遺物。',
+                    effect: { type: 'story_key', conditionId: 'achieve_peace' },
+                    sourceNPC: 'oasis_elder'
+                }
             },
             {
                 id: 'raider_chief',
                 name: '略奪者の頭目',
-                role: '暴力的だが一定の規律を持つ収奪者のボス'
+                role: '恐ろしいが、実は飢えから民を守ろうとしている。一定の規律を持つ。',
+                appearance: '傷だらけの顔、黒いターバン、鋭い目',
+                uniqueItem: {
+                    id: 'sandstorm_flag',
+                    name: '砂嵐の旗',
+                    description: '砂嵐を操る古の旗。戦闘や移動に有利。',
+                    effect: { type: 'judgment_bonus', ability: 'stealth', bonus: 2 },
+                    sourceNPC: 'raider_chief'
+                }
             },
             {
                 id: 'ruin_guardian',
                 name: '遺跡の守護者',
-                role: '半ば化け物化した古の番人。理性は残っている'
+                role: '半ば化け物化した古の番人。石像と植物の融合体。理性は残っている。',
+                appearance: '古代の石像に蔦が絡みつき、半ば植物化した姿',
+                uniqueItem: {
+                    id: 'ruin_key',
+                    name: '遺跡の鍵',
+                    description: '真実への扉を開く古代の鍵。',
+                    effect: { type: 'unlock_path', pathId: 'secret_chamber' },
+                    sourceNPC: 'ruin_guardian'
+                }
+            },
+            {
+                id: 'desert_orphan',
+                name: '砂漠の孤児',
+                role: 'アリア自身の投影。両陣営の間で揺れる少年。',
+                appearance: 'ぼろぼろの服、大きな瞳、コンパスを握る',
+                uniqueItem: {
+                    id: 'truth_compass',
+                    name: '真実のコンパス',
+                    description: '正しい道を示すコンパス。迷った時に。',
+                    effect: { type: 'judgment_bonus', ability: 'observation', bonus: 1 },
+                    sourceNPC: 'desert_orphan'
+                }
+            },
+            {
+                id: 'water_keeper',
+                name: '水守りの巫女',
+                role: '中立の存在。水源の真実を知る神秘的な女性。',
+                appearance: '青い衣、水差しを持つ、神秘的な雰囲気',
+                uniqueItem: {
+                    id: 'healing_water',
+                    name: '癒しの水差し',
+                    description: '傷を癒す聖なる水。HP回復効果。',
+                    effect: { type: 'unlock_path', pathId: 'healing_route' },
+                    sourceNPC: 'water_keeper'
+                }
+            },
+            {
+                id: 'wandering_merchant',
+                name: '放浪商人',
+                role: '情報屋。どちらにも武器を売る中立の存在。',
+                appearance: 'ラクダを連れた商人、狡猾な笑み',
+                uniqueItem: {
+                    id: 'versatile_knife',
+                    name: '万能ナイフ',
+                    description: '様々な場面で役立つ道具。',
+                    effect: { type: 'judgment_bonus', ability: 'crafting', bonus: 1 },
+                    sourceNPC: 'wandering_merchant'
+                }
             }
         ],
         baseClearConditions: {
@@ -35,21 +101,21 @@ export const WORLD_TEMPLATES: WorldTemplate[] = [
                 {
                     id: 'understand_conflict',
                     description: 'オアシスと略奪者の対立の真相を理解する',
-                    keywords: ['対立', '真相', '理解', '背景'],
+                    keywords: ['対立', '真相', '理解', '背景', '水源'],
                     met: false,
                     isAbstract: true
                 },
                 {
                     id: 'bond_with_buddy',
                     description: 'バディとの絆を深め、困難を共に乗り越える',
-                    keywords: ['絆', '信頼', '協力'],
+                    keywords: ['絆', '信頼', '協力', '共に'],
                     met: false,
                     isAbstract: true
                 },
                 {
                     id: 'discover_truth',
                     description: '遺跡の秘密または化け物の正体を明らかにする',
-                    keywords: ['秘密', '真実', '発見', '遺跡'],
+                    keywords: ['秘密', '真実', '発見', '遺跡', '守護者'],
                     met: false,
                     isAbstract: true
                 }
@@ -58,7 +124,7 @@ export const WORLD_TEMPLATES: WorldTemplate[] = [
                 {
                     id: 'achieve_peace',
                     description: 'オアシスと略奪者の完全な和解を実現する',
-                    keywords: ['和解', '平和', '協定', '同盟'],
+                    keywords: ['和解', '平和', '協定', '同盟', '水瓶'],
                     met: false,
                     isAbstract: false
                 }
@@ -66,7 +132,7 @@ export const WORLD_TEMPLATES: WorldTemplate[] = [
         }
     },
 
-    // 2. 混沌の不思議国
+    // 2. 混沌の不思議国（第2話ピュアコンバータ + アリス）
     {
         id: 'lawless_wonderland',
         name: '混沌の不思議国',
@@ -74,23 +140,74 @@ export const WORLD_TEMPLATES: WorldTemplate[] = [
             '逆さまの森',
             '永遠の茶会',
             '鏡の回廊',
-            '女王の法廷'
+            '女王の法廷',
+            '時計塔（時間が逆行）'
         ],
         possibleNPCs: [
             {
+                id: 'mad_queen',
+                name: 'ハートの女王',
+                role: '不条理な法で支配。論破されることを恐れる気まぐれな暴君。',
+                appearance: 'ハートの王冠、赤いドレス、常に怒っている',
+                uniqueItem: {
+                    id: 'heart_crown',
+                    name: 'ハートの王冠',
+                    description: '命令を絶対にする力。しかし代償もある。',
+                    effect: { type: 'judgment_bonus', ability: 'intimidation', bonus: 3 },
+                    sourceNPC: 'mad_queen'
+                }
+            },
+            {
                 id: 'mad_hatter',
                 name: '狂った帽子屋',
-                role: '時間感覚を失った元時計職人。親切だが支離滅裂'
+                role: '時間を失った元時計職人。謎かけが好き。親切だが支離滅裂。',
+                appearance: '派手な帽子、ティーカップ、奇妙な笑顔',
+                uniqueItem: {
+                    id: 'broken_watch',
+                    name: '壊れた懐中時計',
+                    description: '時間を巻き戻す力。一度だけ使える。',
+                    effect: { type: 'unlock_path', pathId: 'time_reversal' },
+                    sourceNPC: 'mad_hatter'
+                }
             },
             {
                 id: 'cheshire_cat',
                 name: 'チェシャ猫',
-                role: '姿を消したり現れたりする謎の存在。ヒントをくれる'
+                role: '姿を消す謎の存在。ヒントをくれるが、全ては謎かけ。',
+                appearance: '縞模様、不敵な笑み、消えたり現れたり',
+                uniqueItem: {
+                    id: 'vanishing_smile',
+                    name: '消える笑顔',
+                    description: '姿を隠す力。ステルス能力付与。',
+                    effect: { type: 'judgment_bonus', ability: 'stealth', bonus: 2 },
+                    sourceNPC: 'cheshire_cat'
+                }
             },
             {
-                id: 'queen_of_hearts',
-                name: 'ハートの女王',
-                role: '気まぐれで暴君的。しかし一定のルールには従う'
+                id: 'alice',
+                name: 'アリス',
+                role: 'アリア自身の投影。この世界に囚われた少女。脱出の鍵を握る。',
+                appearance: '青いドレス、金髪、困惑した表情',
+                uniqueItem: {
+                    id: 'mirror_shard',
+                    name: '鏡の欠片',
+                    description: '真実を映す鏡の破片。嘘を見破る。',
+                    effect: { type: 'story_key', conditionId: 'find_self' },
+                    sourceNPC: 'alice'
+                }
+            },
+            {
+                id: 'white_rabbit',
+                name: '白兎',
+                role: '常に急いでいる。脱出の鍵を持つ？時間に追われている。',
+                appearance: '白い毛皮、懐中時計、赤い目',
+                uniqueItem: {
+                    id: 'silver_watch',
+                    name: '銀の懐中時計',
+                    description: '正確な時間を示す唯一の時計。',
+                    effect: { type: 'story_key', conditionId: 'win_queen_favor' },
+                    sourceNPC: 'white_rabbit'
+                }
             }
         ],
         baseClearConditions: {
@@ -98,21 +215,21 @@ export const WORLD_TEMPLATES: WorldTemplate[] = [
                 {
                     id: 'understand_madness',
                     description: '不思議国の法則を理解し、適応する',
-                    keywords: ['法則', '理解', '適応', '謎'],
+                    keywords: ['法則', '理解', '適応', '謎', '不条理'],
                     met: false,
                     isAbstract: true
                 },
                 {
                     id: 'navigate_chaos',
                     description: '混沌を乗り越え、バディと無事に進む',
-                    keywords: ['混沌', '乗り越える', '進む'],
+                    keywords: ['混沌', '乗り越える', '進む', '絆'],
                     met: false,
                     isAbstract: true
                 },
                 {
                     id: 'find_self',
                     description: '鏡の中で真実の自分を見出す',
-                    keywords: ['真実', '自分', '鏡', '発見'],
+                    keywords: ['真実', '自分', '鏡', '発見', 'アリス'],
                     met: false,
                     isAbstract: true
                 }
@@ -121,7 +238,7 @@ export const WORLD_TEMPLATES: WorldTemplate[] = [
                 {
                     id: 'win_queen_favor',
                     description: '女王の完全な信任を得て、出口を開いてもらう',
-                    keywords: ['女王', '信任', '許可', '出口'],
+                    keywords: ['女王', '信任', '許可', '出口', '時計'],
                     met: false,
                     isAbstract: false
                 }
@@ -285,7 +402,7 @@ export const WORLD_TEMPLATES: WorldTemplate[] = [
         }
     },
 
-    // 4. ネオン・ディストピア
+    // 4. ネオン・ディストピア（第8話ピュアブレーカー）
     {
         id: 'neon_dystopia',
         name: 'ネオン・ディストピア',
@@ -293,23 +410,88 @@ export const WORLD_TEMPLATES: WorldTemplate[] = [
             '摩天楼の繁華街',
             '地下街のスラム',
             '企業タワー',
-            '廃墟工場地帯'
+            '廃墟工場地帯',
+            'データセンター',
+            '秘密ラボ'
         ],
         possibleNPCs: [
             {
                 id: 'security_captain',
                 name: '冷徹な警備隊長',
-                role: '秩序を守るためなら手段を選ばない'
+                role: '秩序を守るためなら手段を選ばない。企業の忠実な犬。',
+                appearance: 'サイバー装備、冷たい目、企業ロゴ',
+                uniqueItem: {
+                    id: 'security_pass',
+                    name: 'セキュリティパス',
+                    description: '全てのドアを開く最高権限カード。',
+                    effect: { type: 'unlock_path', pathId: 'corporate_access' },
+                    sourceNPC: 'security_captain'
+                }
             },
             {
                 id: 'hacker_leader',
                 name: 'カリスマ的ハッカー',
-                role: '非合法組織のリーダー。正義感はある'
+                role: '非合法組織のリーダー。正義感はあるが過激。',
+                appearance: 'フード、ネオンマスク、ハッキングデバイス',
+                uniqueItem: {
+                    id: 'hacking_tool',
+                    name: 'ハッキングツール',
+                    description: 'セキュリティを突破する最強ツール。',
+                    effect: { type: 'judgment_bonus', ability: 'knowledge', bonus: 2 },
+                    sourceNPC: 'hacker_leader'
+                }
             },
             {
                 id: 'rogue_android',
                 name: '狂乱のアンドロイド',
-                role: '暴走ロボの残骸から生まれた意識体'
+                role: '暴走ロボの残骸から生まれた意識体。人間への憎しみと憧れ。',
+                appearance: '半壊した機械、赤く光る目、人型',
+                uniqueItem: {
+                    id: 'ai_core',
+                    name: 'AIコア',
+                    description: 'アンドロイドの心。企業の秘密が記録されている。',
+                    effect: { type: 'story_key', conditionId: 'expose_conspiracy' },
+                    sourceNPC: 'rogue_android'
+                }
+            },
+            {
+                id: 'street_doc',
+                name: '裏医者',
+                role: 'サイバーウェア密売人。中立だが情報通。',
+                appearance: '白衣、サイバー義手、商売人の笑み',
+                uniqueItem: {
+                    id: 'cyber_enhancer',
+                    name: 'サイバー強化剤',
+                    description: '一時的に能力を向上させる薬物。',
+                    effect: { type: 'judgment_bonus', ability: 'martialArts', bonus: 2 },
+                    sourceNPC: 'street_doc'
+                }
+            },
+            {
+                id: 'corpo_defector',
+                name: '元企業幹部',
+                role: '良心の呵責から離反。内部情報を持つ。',
+                appearance: 'スーツ、疲れた顔、データチップ',
+                uniqueItem: {
+                    id: 'data_chip',
+                    name: '機密データチップ',
+                    description: '企業の陰謀の証拠。真実を暴く鍵。',
+                    effect: { type: 'story_key', conditionId: 'unite_factions' },
+                    sourceNPC: 'corpo_defector'
+                }
+            },
+            {
+                id: 'ai_child',
+                name: 'AIの残滓',
+                role: '消されたAIの記憶。アリアの純粋さの投影。',
+                appearance: 'ホログラム、子供の姿、透明',
+                uniqueItem: {
+                    id: 'memory_fragment',
+                    name: '記憶の断片',
+                    description: 'システムの真実が記録された断片。',
+                    effect: { type: 'unlock_path', pathId: 'hidden_truth' },
+                    sourceNPC: 'ai_child'
+                }
             }
         ],
         baseClearConditions: {
@@ -317,21 +499,21 @@ export const WORLD_TEMPLATES: WorldTemplate[] = [
                 {
                     id: 'understand_conflict',
                     description: '都市の対立構造と真の脅威を理解する',
-                    keywords: ['対立', '脅威', '理解', '構造'],
+                    keywords: ['対立', '脅威', '理解', '構造', '企業'],
                     met: false,
                     isAbstract: true
                 },
                 {
                     id: 'survive_dystopia',
                     description: 'ディストピアの危険を乗り越え、生き延びる',
-                    keywords: ['生存', '乗り越える', '危険'],
+                    keywords: ['生存', '乗り越える', '危険', 'サバイバル'],
                     met: false,
                     isAbstract: true
                 },
                 {
                     id: 'expose_conspiracy',
                     description: '企業の陰謀または暴走の原因を明らかにする',
-                    keywords: ['陰謀', '原因', '暴露', '真実'],
+                    keywords: ['陰謀', '原因', '暴露', '真実', 'データ'],
                     met: false,
                     isAbstract: true
                 }
@@ -340,7 +522,7 @@ export const WORLD_TEMPLATES: WorldTemplate[] = [
                 {
                     id: 'unite_factions',
                     description: '警備隊とハッカーを和解させ、暴走ロボを撃退する',
-                    keywords: ['和解', '同盟', '撃退', '勝利'],
+                    keywords: ['和解', '同盟', '撃退', '勝利', '統合'],
                     met: false,
                     isAbstract: false
                 }
@@ -464,7 +646,7 @@ export const WORLD_TEMPLATES: WorldTemplate[] = [
         }
     },
 
-    // 6. 見捨てられた島
+    // 6. 見捨てられた島（夏の旅行の記憶）
     {
         id: 'forsaken_island',
         name: '見捨てられた島',
@@ -472,23 +654,89 @@ export const WORLD_TEMPLATES: WorldTemplate[] = [
             '白砂のビーチ',
             '兎人の集落',
             '密林の奥地',
-            '断崖の岬'
+            '断崖の岬',
+            '廃研究所',
+            '毒の沼地',
+            '古い船の残骸'
         ],
         possibleNPCs: [
             {
                 id: 'rabbit_chief',
                 name: '臆病な兎人の長',
-                role: '平和を愛するが、決断力に欠ける'
+                role: '平和を愛するが、決断力に欠ける。人間を恐れている。',
+                appearance: '白い兎の耳と尾、破れた服、怯えた目',
+                uniqueItem: {
+                    id: 'peace_offering',
+                    name: '平和の印',
+                    description: '兎人との友好を示す印。信頼の証。',
+                    effect: { type: 'story_key', conditionId: 'help_rabbits' },
+                    sourceNPC: 'rabbit_chief'
+                }
             },
             {
                 id: 'plant_incarnation',
                 name: '巨大植物の化身',
-                role: '知性を持った植物。交渉可能かもしれない'
+                role: '知性を持った巨大食虫植物。人面花。交渉可能かもしれない。',
+                appearance: '巨大な人面花、触手状の蔦、緑と赤',
+                uniqueItem: {
+                    id: 'seed_of_life',
+                    name: '生命の種',
+                    description: '植物の心臓。島を救う鍵かもしれない。',
+                    effect: { type: 'story_key', conditionId: 'save_island' },
+                    sourceNPC: 'plant_incarnation'
+                }
             },
             {
                 id: 'sea_prophet',
                 name: '海の預言者',
-                role: 'リヴァイアサンの到来を予言する謎の隠者'
+                role: 'リヴァイアサンの到来を予言する謎の隠者。真実を知る。',
+                appearance: 'ボロボロのローブ、杖、海藻の髪',
+                uniqueItem: {
+                    id: 'prophecy_scroll',
+                    name: '予言の巻物',
+                    description: '未来が書かれた巻物。島の運命を変える。',
+                    effect: { type: 'unlock_path', pathId: 'prophecy_path' },
+                    sourceNPC: 'sea_prophet'
+                }
+            },
+            {
+                id: 'castaway',
+                name: '漂流者',
+                role: '最近流れ着いた人間。脱出を望む。協力者になりうる。',
+                appearance: '日焼けした肌、破れた服、筏の破片',
+                uniqueItem: {
+                    id: 'salvage_kit',
+                    name: 'サルベージキット',
+                    description: '船の残骸から拾った道具。修理に使える。',
+                    effect: { type: 'judgment_bonus', ability: 'crafting', bonus: 2 },
+                    sourceNPC: 'castaway'
+                }
+            },
+            {
+                id: 'mutant_rabbit',
+                name: '変異兎人',
+                role: '植物に寄生された兎人。理性と本能の間で揺れる。',
+                appearance: '半分植物化した兎人、蔦が絡みつく',
+                uniqueItem: {
+                    id: 'symbiotic_serum',
+                    name: '共生の血清',
+                    description: '植物と兎人の融合の秘密。治療か進化か。',
+                    effect: { type: 'unlock_path', pathId: 'symbiosis_route' },
+                    sourceNPC: 'mutant_rabbit'
+                }
+            },
+            {
+                id: 'scientist_ghost',
+                name: '研究者の幻影',
+                role: 'AIか幻覚？過去の研究者の残留思念。真実を語る。',
+                appearance: '透明な姿、白衣、悲しげな表情',
+                uniqueItem: {
+                    id: 'research_notes',
+                    name: '研究ノート',
+                    description: '全ての真実が記された最後のノート。',
+                    effect: { type: 'story_key', conditionId: 'find_solution' },
+                    sourceNPC: 'scientist_ghost'
+                }
             }
         ],
         baseClearConditions: {
@@ -496,21 +744,21 @@ export const WORLD_TEMPLATES: WorldTemplate[] = [
                 {
                     id: 'understand_island',
                     description: '島の危機と兎人の窮状を理解する',
-                    keywords: ['危機', '窮状', '理解'],
+                    keywords: ['危機', '窮状', '理解', '実験', '真実'],
                     met: false,
                     isAbstract: true
                 },
                 {
                     id: 'find_solution',
                     description: '巨大植物または脱出の方法を見出す',
-                    keywords: ['方法', '解決', '発見'],
+                    keywords: ['方法', '解決', '発見', 'ノート'],
                     met: false,
                     isAbstract: true
                 },
                 {
                     id: 'help_rabbits',
                     description: '兎人を助け、希望をもたらす',
-                    keywords: ['助ける', '希望', '支援'],
+                    keywords: ['助ける', '希望', '支援', '平和'],
                     met: false,
                     isAbstract: true
                 }
@@ -518,8 +766,8 @@ export const WORLD_TEMPLATES: WorldTemplate[] = [
             perfect: [
                 {
                     id: 'save_island',
-                    description: '巨大植物を撃退し、島を救う',
-                    keywords: ['撃退', '救う', '勝利', '平和'],
+                    description: '巨大植物を説得または撃退し、島を救う',
+                    keywords: ['撃退', '救う', '勝利', '平和', '種'],
                     met: false,
                     isAbstract: false
                 }
