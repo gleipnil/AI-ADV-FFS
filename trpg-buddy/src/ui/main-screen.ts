@@ -1,4 +1,4 @@
-import type { GameState, GMResponse } from '../types';
+import type { GameState, GMResponse, JudgmentResult } from '../types';
 
 export class MainScreen {
   private headerEl: HTMLElement;
@@ -145,6 +145,16 @@ export class MainScreen {
       `;
     }
 
+    // Judgment result (if any)
+    if (response.judgmentResult) {
+      this.displayJudgmentResult(response.judgmentResult);
+    }
+
+    // Pending judgment notice (if any)
+    if (gameState.pendingJudgment) {
+      this.displayPendingJudgment(gameState.pendingJudgment);
+    }
+
     // Buddy dialogue
     if (response.buddyDialogue) {
       const trustColor = this.getTrustColorClass(gameState.buddy.trustLevel);
@@ -167,6 +177,50 @@ export class MainScreen {
 
     // Update status bar
     this.updateStatusBar(gameState);
+  }
+
+  private displayPendingJudgment(pending: NonNullable<GameState['pendingJudgment']>): void {
+    // Helper functions need to be imported
+    const abilityNames: Record<string, string> = {
+      'swordsmanship': '剣術', 'martialArts': '体術', 'shooting': '射撃',
+      'stealth': '隠密', 'crafting': '工作', 'knowledge': '学問',
+      'observation': '観察', 'persuasion': '話術', 'intimidation': '威圧', 'medicine': '医術'
+    };
+    const difficultyNames = { 'EASY': '易', 'NORMAL': '中', 'HARD': '難' };
+
+    const abilityJa = abilityNames[pending.request.requiredAbility] || pending.request.requiredAbility;
+    const difficultyJa = difficultyNames[pending.request.difficulty as keyof typeof difficultyNames] || pending.request.difficulty;
+
+    this.mainContentEl.innerHTML += `
+      <div class="pending-judgment">
+        <div class="judgment-notice">
+          🎲 判定が必要: ${abilityJa}判定（難易度: ${difficultyJa}）
+        </div>
+        <div class="judgment-hint">
+          💡 「判定する」と入力するか、別の方法を試すこともできます
+        </div>
+      </div>
+    `;
+  }
+
+  private displayJudgmentResult(result: JudgmentResult): void {
+    const resultClass = result.isCritical ? 'judgment-critical' :
+      result.isFumble ? 'judgment-fumble' :
+        result.success ? 'judgment-success' : 'judgment-failure';
+
+    const resultText = result.isCritical ? '【クリティカル！】' :
+      result.isFumble ? '【ファンブル...】' :
+        result.success ? '【成功】' : '【失敗】';
+
+    this.mainContentEl.innerHTML += `
+      <div class="judgment-result ${resultClass}">
+        <div class="judgment-header">🎲 判定結果</div>
+        <div class="judgment-dice">
+          ダイス: ${result.roll} / 目標値: ${result.threshold}
+        </div>
+        <div class="judgment-outcome">${resultText}</div>
+      </div>
+    `;
   }
 
   renderInputArea(): void {
