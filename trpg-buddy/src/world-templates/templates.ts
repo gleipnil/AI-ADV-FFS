@@ -129,31 +129,124 @@ export const WORLD_TEMPLATES: WorldTemplate[] = [
         }
     },
 
-    // 3. 永遠の全寮制学校
+    // 3. 永遠の全寮制学校（アリアの学校生活の記憶）
     {
         id: 'eternal_school',
         name: '永遠の全寮制学校',
         locations: [
-            '整然とした教室棟',
-            '賑やかな部活棟',
-            '静謐な図書館',
-            '禁じられた地下室'
+            '1-A教室（永遠の授業）',
+            '図書室（禁書の棚）',
+            '屋上（施錠されている）',
+            '保健室（記憶操作の場）',
+            '地下室（不適合者の牢獄）',
+            '音楽室（ピアノが勝手に鳴る）',
+            '美術室（不気味な絵画）',
+            '中庭（お茶会の場）'
         ],
         possibleNPCs: [
             {
                 id: 'class_president',
-                name: '優等生の級長',
-                role: '完璧な模範生。しかし目に生気がない'
+                name: '生徒会長 シオン',
+                role: '完璧な優等生。常に笑顔だが、目に光がない。他の生徒を「正しく」導こうとする。',
+                appearance: '黒髪ロング、整った制服、金のバッジ',
+                uniqueItem: {
+                    id: 'president_badge',
+                    name: '会長のバッジ',
+                    description: '権威の象徴。これを持つ者の言葉は重みを持つ。',
+                    effect: { type: 'judgment_bonus', ability: 'persuasion', bonus: 2 },
+                    sourceNPC: 'class_president'
+                }
             },
             {
-                id: 'club_captain',
-                name: '陽気な部活部長',
-                role: '明るく親しみやすい。引き留めようとする'
+                id: 'library_girl',
+                name: '図書委員 ユキ',
+                role: '物静かで知的。禁書の棚を守っている。真実を知っているが、話そうとしない。',
+                appearance: '銀髪ショート、眼鏡、古い本を抱えている',
+                uniqueItem: {
+                    id: 'forbidden_book',
+                    name: '禁書「真実の記録」',
+                    description: '学校システムの秘密が書かれた本。読むと真実が明らかに。',
+                    effect: { type: 'story_key', conditionId: 'discover_anomaly' },
+                    sourceNPC: 'library_girl'
+                }
             },
             {
-                id: 'librarian',
-                name: '司書',
-                role: '静かで知的。真実を知っているかもしれない'
+                id: 'sports_captain',
+                name: '体育部長 レナ',
+                role: '明るく元気な体育会系。しかし笑顔の裏に疲労が見える。',
+                appearance: '茶髪ポニーテール、ジャージ姿、ホイッスル首から下げ',
+                uniqueItem: {
+                    id: 'emergency_whistle',
+                    name: '緊急ホイッスル',
+                    description: '吹くと仲間を呼べる。危機的状況で助けが来る。',
+                    effect: { type: 'unlock_path', pathId: 'backup_route' },
+                    sourceNPC: 'sports_captain'
+                }
+            },
+            {
+                id: 'art_student',
+                name: '美術部員 サクラ',
+                role: '不気味な絵を描く少女。異常性を感じ取っているが、絵でしか表現できない。',
+                appearance: '桃色の髪、絵の具まみれのスモック、空虚な瞳',
+                uniqueItem: {
+                    id: 'prophetic_sketch',
+                    name: '予知のスケッチブック',
+                    description: '未来を描いた絵。次に起こることが予見できる。',
+                    effect: { type: 'judgment_bonus', ability: 'observation', bonus: 2 },
+                    sourceNPC: 'art_student'
+                }
+            },
+            {
+                id: 'infirmary_girl',
+                name: '保健室の常連 ミオ',
+                role: '病弱で保健室に居る少女。実は洗脳に抵抗しているため「病気」扱い。',
+                appearance: '青白い顔、包帯、小瓶を握りしめている',
+                uniqueItem: {
+                    id: 'memory_medicine',
+                    name: '記憶の薬',
+                    description: '一時的に記憶を取り戻す薬。真実が見える。',
+                    effect: { type: 'story_key', conditionId: 'resist_temptation' },
+                    sourceNPC: 'infirmary_girl'
+                }
+            },
+            {
+                id: 'rebel_student',
+                name: '不良少女 カノン',
+                role: '反抗的な態度の少女。脱出を試みた痕跡（火傷）がある。',
+                appearance: '金髪、破れた制服、ライター',
+                uniqueItem: {
+                    id: 'rebel_lighter',
+                    name: '反逆のライター',
+                    description: '火を使った行動に有利。禁止されている道具。',
+                    effect: { type: 'judgment_bonus', ability: 'crafting', bonus: 1 },
+                    sourceNPC: 'rebel_student'
+                }
+            },
+            {
+                id: 'scarecrow_teacher',
+                name: '担任教師（かかし）',
+                role: '常に笑顔の藁人形。動かないが、常に「見ている」。',
+                appearance: '藁で作られた人形、教師の服、描かれた笑顔',
+                uniqueItem: {
+                    id: 'reality_chalk',
+                    name: '現実のチョーク',
+                    description: '黒板に書いたことが一時的に現実になる魔法のチョーク。',
+                    effect: { type: 'unlock_path', pathId: 'written_reality' },
+                    sourceNPC: 'scarecrow_teacher'
+                }
+            },
+            {
+                id: 'statue_principal',
+                name: '理事長（動く彫像）',
+                role: '大理石の彫像。夜になると動き、システムを守る番人。',
+                appearance: '白い大理石、ローブ姿、鍵を持つ',
+                uniqueItem: {
+                    id: 'basement_key',
+                    name: '地下室の鍵',
+                    description: '禁じられた地下室への扉を開く唯一の鍵。',
+                    effect: { type: 'story_key', conditionId: 'find_key' },
+                    sourceNPC: 'statue_principal'
+                }
             }
         ],
         baseClearConditions: {
@@ -161,21 +254,21 @@ export const WORLD_TEMPLATES: WorldTemplate[] = [
                 {
                     id: 'resist_temptation',
                     description: '学校の誘惑を見抜き、拒絶する意志を持つ',
-                    keywords: ['誘惑', '拒絶', '意志', '抵抗'],
+                    keywords: ['誘惑', '拒絶', '意志', '抵抗', '記憶の薬'],
                     met: false,
                     isAbstract: true
                 },
                 {
                     id: 'discover_anomaly',
                     description: '学校システムの異常性を理解する',
-                    keywords: ['異常', 'システム', '理解', '矛盾'],
+                    keywords: ['異常', 'システム', '理解', '矛盾', '禁書'],
                     met: false,
                     isAbstract: true
                 },
                 {
                     id: 'escape_determination',
                     description: 'バディと共に脱出への決意を固める',
-                    keywords: ['脱出', '決意', '共に'],
+                    keywords: ['脱出', '決意', '共に', '絆'],
                     met: false,
                     isAbstract: true
                 }
@@ -183,8 +276,8 @@ export const WORLD_TEMPLATES: WorldTemplate[] = [
             perfect: [
                 {
                     id: 'find_key',
-                    description: '地下室への鍵を発見し、脱出路を開く',
-                    keywords: ['鍵', '地下室', '脱出路', '発見'],
+                    description: '地下室への鍵を発見し、真実を暴いて脱出する',
+                    keywords: ['鍵', '地下室', '脱出', '真実', '理事長'],
                     met: false,
                     isAbstract: false
                 }
@@ -255,62 +348,115 @@ export const WORLD_TEMPLATES: WorldTemplate[] = [
         }
     },
 
-    // 5. 弁舌の帝国
+    // 5. 色彩の絵画世界（アリアのスケッチブックの記憶）
     {
-        id: 'rhetorical_empire',
-        name: '弁舌の帝国',
+        id: 'painted_world',
+        name: '色彩の絵画世界',
         locations: [
-            '大広場（アゴラ）',
-            '哲学者のアカデミア',
-            '神殿',
-            '皇帝の宮殿'
+            '水彩の森',
+            'クレヨンの城',
+            '油絵の海',
+            '鉛筆スケッチの廃墟',
+            '消しゴムで消された谷',
+            'パレットの泉',
+            '白いキャンバスの平原'
         ],
         possibleNPCs: [
             {
-                id: 'eloquent_philosopher',
-                name: '雄弁な哲学者',
-                role: '論理と理性で全てを解決しようとする'
+                id: 'color_king',
+                name: '虹色の王',
+                role: '7色の王冠をかぶった絵の具の王様。創造の象徴だが独裁的。',
+                appearance: '虹色のローブ、絵の具のような体、パレット持つ',
+                uniqueItem: {
+                    id: 'rainbow_palette',
+                    name: '虹のパレット',
+                    description: '全ての色を自在に操る。現実を塗り替える力。',
+                    effect: { type: 'judgment_bonus', ability: 'crafting', bonus: 3 },
+                    sourceNPC: 'color_king'
+                }
             },
             {
-                id: 'fanatic_priest',
-                name: '狂信的な神官',
-                role: '信仰こそが真理と信じて疑わない'
+                id: 'monochrome_shadow',
+                name: 'モノクロの影',
+                role: '色を失った悲しい存在。全てを灰色に塗りつぶそうとする。',
+                appearance: '白と黒だけの姿、涙を流している',
+                uniqueItem: {
+                    id: 'graphite_pencil',
+                    name: '黒鉛筆',
+                    description: '全てをモノクロにする。色を消す力。',
+                    effect: { type: 'unlock_path', pathId: 'monochrome_path' },
+                    sourceNPC: 'monochrome_shadow'
+                }
             },
             {
-                id: 'calm_emperor',
-                name: '冷静な皇帝',
-                role: '哲学者と神官の対立を利用して統治している'
+                id: 'crayon_children',
+                name: 'クレヨンの子供たち',
+                role: '無邪気な落書きの子供。アリアの幼少期の投影。',
+                appearance: 'カラフルなクレヨンでできた子供たち、笑顔',
+                uniqueItem: {
+                    id: 'magic_crayon',
+                    name: '魔法のクレヨン',
+                    description: '描いたものが一時的に現実になる。',
+                    effect: { type: 'story_key', conditionId: 'create_bridge' },
+                    sourceNPC: 'crayon_children'
+                }
+            },
+            {
+                id: 'eraser_monster',
+                name: '消しゴムの怪物',
+                role: '巨大な消しゴム。全てを消そうとする。忘却の象徴。',
+                appearance: '白くて巨大、消しカスをまき散らす',
+                uniqueItem: {
+                    id: 'giant_eraser',
+                    name: '忘却の消しゴム',
+                    description: '記憶を消す力。使うと一部の記憶を失う。',
+                    effect: { type: 'unlock_path', pathId: 'erasure_ending' },
+                    sourceNPC: 'eraser_monster'
+                }
+            },
+            {
+                id: 'paintbrush_maiden',
+                name: '筆姫',
+                role: '美しい絵筆の精霊。創造性と美の象徴。',
+                appearance: '長い髪が筆のよう、絵の具のドレス',
+                uniqueItem: {
+                    id: 'creation_brush',
+                    name: '創造の筆',
+                    description: '絵を描いて現実化する。最強の創造ツール。',
+                    effect: { type: 'story_key', conditionId: 'restore_colors' },
+                    sourceNPC: 'paintbrush_maiden'
+                }
             }
         ],
         baseClearConditions: {
             normal: [
                 {
-                    id: 'understand_rhetoric',
-                    description: '帝国の弁論文化と対立の本質を理解する',
-                    keywords: ['弁論', '対立', '理解', '本質'],
+                    id: 'understand_world',
+                    description: '絵画世界の法則を理解する',
+                    keywords: ['絵画', '理解', '色彩', '創造'],
                     met: false,
                     isAbstract: true
                 },
                 {
-                    id: 'gain_respect',
-                    description: '論理的な対話で相手の尊敬を得る',
-                    keywords: ['尊敬', '対話', '論理'],
+                    id: 'create_bridge',
+                    description: '想像力で道を切り開く',
+                    keywords: ['想像', '創造', 'クレヨン', '道'],
                     met: false,
                     isAbstract: true
                 },
                 {
-                    id: 'discover_truth',
-                    description: '哲学と宗教の対立の真の原因を見抜く',
-                    keywords: ['真相', '原因', '発見'],
+                    id: 'escape_canvas',
+                    description: 'キャンバスの外へ脱出する',
+                    keywords: ['脱出', 'キャンバス', '外'],
                     met: false,
                     isAbstract: true
                 }
             ],
             perfect: [
                 {
-                    id: 'achieve_reconciliation',
-                    description: '弁論大会で勝利し、哲学者と神官の和解を実現する',
-                    keywords: ['弁論', '勝利', '和解', '実現'],
+                    id: 'restore_colors',
+                    description: '消しゴムの怪物を説得し、全ての色を取り戻す',
+                    keywords: ['色彩', '回復', '説得', '和解', '完成'],
                     met: false,
                     isAbstract: false
                 }
