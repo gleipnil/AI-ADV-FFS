@@ -248,7 +248,6 @@ endingType: [clear/fail/なし]
     }
 
     private buildJudgmentNarrativePrompt(
-        gameState: GameState,
         request: JudgmentRequest,
         result: JudgmentResult
     ): string {

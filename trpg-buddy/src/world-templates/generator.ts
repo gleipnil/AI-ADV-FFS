@@ -1,6 +1,6 @@
 import type { WorldTemplate, WorldInstance, Location, NPC, Condition } from '../types';
 import { selectRandomWorldTemplate } from './templates';
-import { selectRandomAbnormalities, selectRandomTheme, type AbnormalityTag, type ThemeTag } from './tags';
+import { selectRandomAbnormalities, selectRandomTheme, type AbnormalityTag } from './tags';
 
 /**
  * 世界テンプレートから実際の世界インスタンスを生成
