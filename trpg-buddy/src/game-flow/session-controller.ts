@@ -1,20 +1,22 @@
 // World template system integrated
 
 import type { GameState, GMResponse, JudgmentRequest, JudgmentResult, JudgmentParams } from '../types';
-import { EndingType } from '../types';
 import type { GeminiClient } from '../ai-gm/gemini-client';
 import type { TrustManager } from '../buddy/trust-manager';
+import type { SaveManager } from '../save-system/save-manager';
 import { generateWorld } from '../world-templates/generator';
 import { SceneManager } from '../scene-management/scene-manager';
-import { evaluateClearConditions, determineEndingType, shouldPreventEarlyClear } from './condition-evaluator';
+import { evaluateClearConditions } from './condition-evaluator';
 import { executeJudgment } from '../judgment/judgment-engine';
+import { restoreAbilitiesFromGallery } from '../memory-fragments/award-logic';
 
 export class SessionController {
     private sceneManager: SceneManager;
 
     constructor(
         private geminiClient: GeminiClient,
-        private trustManager: TrustManager
+        private trustManager: TrustManager,
+        private saveManager: SaveManager
     ) {
         this.sceneManager = new SceneManager();
     }
@@ -68,6 +70,9 @@ export class SessionController {
                 turn: 1
             });
         }
+
+        // 🔄 過去のカケラから能力を復元
+        restoreAbilitiesFromGallery(gameState.buddy, this.saveManager);
 
         return gameState;
     }
@@ -168,39 +173,7 @@ export class SessionController {
             };
         }
 
-        // Check turn limit with climax extension
-        const isClimaxExtensionActive = this.shouldExtendForClimax(state);
-        const effectiveTurnLimit = isClimaxExtensionActive ? 23 : 20;
-
-        if (state.turnNumber >= effectiveTurnLimit) {
-            response.internalEvaluation.endingFlags.shouldEnd = true;
-            if (!response.internalEvaluation.endingFlags.endingType) {
-                response.internalEvaluation.endingFlags.endingType = 'fail';
-            }
-            console.log(`SessionController: Turn limit ${effectiveTurnLimit} reached. Forcing end.`);
-        } else if (state.turnNumber >= 20 && isClimaxExtensionActive) {
-            console.log(`SessionController: Climax extension active. Allowing up to turn 23.`);
-        }
-
         return response;
-    }
-
-    private shouldExtendForClimax(state: GameState): boolean {
-        // クライマックス延長の条件:
-        // 1. ターン20以上
-        // 2. 累積進行度が70以上（クライマックスに入っている）
-        // 3. クリア条件も失敗条件も未達成（未解決）
-
-        if (state.turnNumber < 20) {
-            return false;
-        }
-
-        const isInClimax = state.cumulativeProgression >= 70;
-        const isUnresolved =
-            !state.currentWorld.clearConditions.normal.some(c => c.met) &&
-            !state.currentWorld.clearConditions.perfect.some(c => c.met);
-
-        return isInClimax && isUnresolved;
     }
 
     private isJudgmentExecutionCommand(input: string): boolean {

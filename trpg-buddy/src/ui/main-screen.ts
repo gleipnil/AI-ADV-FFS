@@ -276,7 +276,7 @@ export class MainScreen {
     }
   }
 
-  showEndingScene(endingText: string, gameState: GameState): void {
+  showEndingScene(endingText: string): void {
     // Display ending narrative
     setTimeout(() => {
       this.mainContentEl.innerHTML += `
@@ -287,6 +287,16 @@ export class MainScreen {
       `;
       this.mainContentEl.scrollTop = this.mainContentEl.scrollHeight;
     }, 500);
+  }
+
+  /**
+   * 記憶のカケラ獲得通知
+   * 簡易実装: コンソールログのみ（将来的にビジュアル表示を追加）
+   */
+  showFragmentAward(fragment: import('../types').MemoryFragment): void {
+    console.log(`【記憶のカケラ獲得】${fragment.title}`);
+    console.log(`説明: ${fragment.description}`);
+    console.log(`付与能力: ${fragment.abilities.map(a => `${a.ability}(${a.count})`).join(', ')}`);
   }
 
   showEndingScreen(endingType: 'perfect' | 'normal' | 'survival' | 'breakdown', onContinue: () => void): void {

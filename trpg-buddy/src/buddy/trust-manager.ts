@@ -9,7 +9,7 @@ export interface PlayerAction {
 }
 
 export class TrustManager {
-    calculateTrustChange(action: PlayerAction): number {
+    calculateTrustChange(_action: PlayerAction): number {
         // TODO: Implement trust calculation based on action
         // For now, return neutral
         return 0;

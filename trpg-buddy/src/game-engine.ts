@@ -6,6 +6,7 @@ import { SessionController } from './game-flow/session-controller';
 import { determineEndingType } from './game-flow/condition-evaluator';
 import { SaveManager } from './save-system/save-manager';
 import { MainScreen } from './ui/main-screen';
+import { awardFragment, grantAbilitiesFromFragments, hasFragment, persistFragment } from './memory-fragments/award-logic';
 
 export class GameEngine {
     private geminiClient: GeminiClient;
@@ -18,8 +19,8 @@ export class GameEngine {
     constructor(apiKey: string) {
         this.geminiClient = new GeminiClient(apiKey);
         this.trustManager = new TrustManager();
-        this.sessionController = new SessionController(this.geminiClient, this.trustManager);
         this.saveManager = new SaveManager();
+        this.sessionController = new SessionController(this.geminiClient, this.trustManager, this.saveManager);
         this.mainScreen = new MainScreen();
     }
 
@@ -115,18 +116,36 @@ export class GameEngine {
             console.log('GameEngine: Ending scene generated');
 
             // Display ending scene
-            this.mainScreen.showEndingScene(endingScene, this.gameState);
+            this.mainScreen.showEndingScene(endingScene);
 
             // Wait for ending scene to display (setTimeout is 500ms + buffer)
             await new Promise(resolve => setTimeout(resolve, 1500));
 
             // Award memory fragments based on ending type
-            if (endingType === EndingType.PERFECT) {
-                // TODO: Implement fragment awarding logic (perfect)
-                console.log('Awarding memory fragments (perfect)...');
-            } else if (endingType === EndingType.NORMAL) {
-                // TODO: Implement fragment awarding logic (normal)
-                console.log('Awarding memory fragments (normal)...');
+            if (endingType === EndingType.PERFECT || endingType === EndingType.NORMAL) {
+                const fragment = awardFragment(
+                    this.gameState.currentWorld.templateId,
+                    endingType
+                );
+
+                if (fragment && !hasFragment(this.gameState.memoryFragments, fragment.id)) {
+                    console.log(`💎 記憶のカケラ獲得: ${fragment.title}`);
+
+                    // 1. セッション内に記録
+                    this.gameState.memoryFragments.push(fragment);
+
+                    // 2. カケラから能力を付与
+                    grantAbilitiesFromFragments(
+                        this.gameState.buddy,
+                        [fragment]
+                    );
+
+                    // 3. ギャラリーに永続化（SaveManager経由）
+                    persistFragment(fragment, this.saveManager);
+
+                    // 4. UI表示（簡易実装）
+                    this.mainScreen.showFragmentAward(fragment);
+                }
             }
 
             // Save game state

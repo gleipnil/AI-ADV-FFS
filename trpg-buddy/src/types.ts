@@ -36,6 +36,7 @@ export interface GameState {
         context: string;
         alternatives?: string[];
     };
+    sessionItems: NPCItem[]; // セッション内で入手したNPC固有アイテム
 }
 
 // ========================================
@@ -76,6 +77,8 @@ export interface NPCTemplate {
     id: string;
     name: string;
     role: string;
+    appearance?: string; // 見た目の詳細（AI GMへのヒント）
+    uniqueItem?: NPCItem; // 固有アイテム（セッション内のみ有効）
 }
 
 export interface NPC extends NPCTemplate {
@@ -138,6 +141,21 @@ export type AbilityId =
     | 'persuasion'     // 話術
     | 'intimidation'   // 威圧
     | 'medicine';      // 医術
+
+// NPC固有アイテムの効果タイプ
+export type ItemEffect =
+    | { type: 'judgment_bonus'; ability: AbilityId; bonus: number } // 判定ボーナス
+    | { type: 'unlock_path'; pathId: string } // ルート解放
+    | { type: 'story_key'; conditionId: string }; // ストーリーキー
+
+// NPC固有アイテム（セッション内のみ有効）
+export interface NPCItem {
+    id: string;
+    name: string;
+    description: string;
+    effect: ItemEffect;
+    sourceNPC: string; // どのNPCから入手可能か
+}
 
 export interface Ability {
     id: AbilityId;

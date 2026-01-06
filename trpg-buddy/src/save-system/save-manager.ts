@@ -72,4 +72,28 @@ export class SaveManager {
         localStorage.setItem(this.GALLERY_KEY, JSON.stringify(updated));
         console.log('SaveManager: Gallery data updated');
     }
+
+    /**
+     * カケラをギャラリーに永続化
+     * Repository パターン: 将来のSQL移行時もこのメソッドのみ変更すればOK
+     */
+    addCollectedFragment(fragment: import('../types').MemoryFragment): void {
+        const gallery = this.getGalleryData();
+
+        // 重複チェック
+        if (!gallery.collectedFragments.find(f => f.id === fragment.id)) {
+            gallery.collectedFragments.push(fragment);
+            this.updateGalleryData(gallery);
+            console.log(`SaveManager: Fragment "${fragment.title}" persisted to gallery`);
+        } else {
+            console.log(`SaveManager: Fragment "${fragment.title}" already collected`);
+        }
+    }
+
+    /**
+     * 収集済みカケラ一覧を取得
+     */
+    getCollectedFragments(): import('../types').MemoryFragment[] {
+        return this.getGalleryData().collectedFragments;
+    }
 }

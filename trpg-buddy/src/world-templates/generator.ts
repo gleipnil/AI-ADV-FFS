@@ -1,4 +1,4 @@
-import type { WorldTemplate, WorldInstance, Location, NPC, Condition } from '../types';
+import type { WorldTemplate, WorldInstance, Location, NPC } from '../types';
 import { selectRandomWorldTemplate } from './templates';
 import { selectRandomAbnormalities, selectRandomTheme, type AbnormalityTag } from './tags';
 
