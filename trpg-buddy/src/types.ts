@@ -31,6 +31,11 @@ export interface GameState {
         reachedEndings: string[];
     };
     saveSlot: number;
+    pendingJudgment?: {
+        request: JudgmentRequest;
+        context: string;
+        alternatives?: string[];
+    };
 }
 
 // ========================================
@@ -235,6 +240,7 @@ export interface GMResponse {
     buddyDialogue?: string;
     hints?: string[];
     judgment?: JudgmentRequest;
+    judgmentResult?: JudgmentResult;
     internalEvaluation: InternalEvaluation;
 }
 

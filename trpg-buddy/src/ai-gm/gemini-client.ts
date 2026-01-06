@@ -1,10 +1,11 @@
 // Gemini AI client implementation with world context integration and ending generation
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import type { GameState, GMResponse, InternalEvaluation, JudgmentRequest, AbilityId } from '../types';
+import type { GameState, GMResponse, InternalEvaluation, JudgmentRequest, JudgmentResult, AbilityId } from '../types';
 import { Difficulty } from '../types';
 import { generateWorldContext } from '../world-templates/generator';
 import { SceneManager } from '../scene-management/scene-manager';
+import { getAbilityNameJa, getDifficultyNameJa } from '../judgment/judgment-engine';
 
 export class GeminiClient {
     private genAI: GoogleGenerativeAI;
@@ -86,6 +87,30 @@ export class GeminiClient {
         }
     }
 
+    async generateJudgmentNarrative(
+        gameState: GameState,
+        request: JudgmentRequest,
+        result: JudgmentResult
+    ): Promise<string> {
+        const prompt = this.buildJudgmentNarrativePrompt(gameState, request, result);
+
+        try {
+            const aiResponse = await this.model.generateContent(prompt);
+            const response = await aiResponse.response;
+            return response.text();
+        } catch (error) {
+            console.error('GeminiClient: Failed to generate judgment narrative:', error);
+            return this.getFallbackNarrative(result);
+        }
+    }
+
+    private getFallbackNarrative(result: JudgmentResult): string {
+        if (result.isCritical) return '完璧だ！';
+        if (result.isFumble) return '失敗した...';
+        if (result.success) return '成功した。';
+        return 'うまくいかなかった。';
+    }
+
     private buildOpeningPrompt(gameState: GameState, playerName: string): string {
         const worldContext = generateWorldContext(gameState.currentWorld);
 
@@ -135,15 +160,6 @@ progressionScore: 0
             `[${d.speaker}] ${d.content}`
         ).join('\n');
 
-        // Check for clear/fail conditions
-        const clearStatus = gameState.currentWorld.clearConditions
-            .map(c => `${c.description}: ${c.met ? '✓達成' : '未達成'}`)
-            .join(' / ');
-
-        const failStatus = gameState.currentWorld.failConditions
-            .map(c => `${c.description}: ${c.met ? '✗発生' : '未発生'}`)
-            .join(' / ');
-
         // 早期クリア抑止のための指示
         const earlyPreventionNote = gameState.turnNumber <= 10
             ? '\n⚠️ 重要: 現在前半10ターン以内です。クリア条件達成が近づいている場合、その直前に困難な障害や予期せぬ展開を挿入し、プレイヤーがそれを乗り越える必要があるようにしてください。'
@@ -165,9 +181,7 @@ ${this.sceneManager.getSceneContext(gameState.currentScene)}
 - セッション: ${gameState.sessionNumber}
 - 総ターン数: ${gameState.turnNumber}
 - バディ名: ${gameState.buddy.name}
-- 信頼度: ${gameState.buddy.trustLevel}
-- クリア進捗: ${clearStatus}
-- 失敗条件: ${failStatus}${earlyPreventionNote}${climaxUrgencyNote}
+- 信頼度: ${gameState.buddy.trustLevel}${earlyPreventionNote}${climaxUrgencyNote}
 
 【シーンの指示】
 ${this.sceneManager.getSceneInstructions(gameState.currentScene.type)}
@@ -220,6 +234,38 @@ progressionScore: [0-10]
 shouldEnd: [true/false]
 endingType: [clear/fail/なし]
 ---END---`;
+    }
+
+    private buildJudgmentNarrativePrompt(
+        gameState: GameState,
+        request: JudgmentRequest,
+        result: JudgmentResult
+    ): string {
+        const abilityJa = getAbilityNameJa(request.requiredAbility);
+        const difficultyJa = getDifficultyNameJa(request.difficulty);
+        const resultType = result.isCritical ? 'クリティカル成功' :
+            result.isFumble ? 'ファンブル（致命的失敗）' :
+                result.success ? '成功' : '失敗';
+
+        return `プレイヤーが判定に挑んだ結果を描写してください。
+
+【判定内容】
+- 能力: ${abilityJa}
+- 難易度: ${difficultyJa}
+- 状況: ${request.context}
+
+【判定結果】
+- ダイス: ${result.roll}
+- 目標値: ${result.threshold}
+- 結果: ${resultType}
+
+【描写の指示】
+${result.isCritical ? '- 完璧な成功を劇的に描写してください\n- バディが驚嘆するリアクションを' : ''}
+${result.isFumble ? '- 致命的な失敗を印象的に描写してください\n- バディが心配するor困惑するリアクションを' : ''}
+${result.success ? '- 成功の様子を鮮やかに描写してください\n- バディの肯定的なリアクションを' : ''}
+${!result.success && !result.isFumble ? '- 失敗の様子を描写してください\n- バディの励ましや次の手を提案' : ''}
+
+2-3文で簡潔に、臨場感ある描写をしてください。`;
     }
 
     private buildEndingPrompt(gameState: GameState, endingType: 'perfect' | 'normal' | 'survival' | 'breakdown'): string {
@@ -290,10 +336,10 @@ ${endingInstruction}
 
     private parseGMResponse(text: string): GMResponse {
         // Parse structured response
-        const sceneMatch = text.match(/---SCENE---([\\s\\S]*?)(?:---BUDDY---|---JUDGMENT---|---EVAL---|$)/);
-        const buddyMatch = text.match(/---BUDDY---([\\s\\S]*?)(?:---JUDGMENT---|---EVAL---|$)/);
-        const judgmentMatch = text.match(/---JUDGMENT---([\\s\\S]*?)---EVAL---/);
-        const evalMatch = text.match(/---EVAL---([\\s\\S]*?)---END---/);
+        const sceneMatch = text.match(/---SCENE---([\s\S]*?)(?:---BUDDY---|---JUDGMENT---|---EVAL---|$)/);
+        const buddyMatch = text.match(/---BUDDY---([\s\S]*?)(?:---JUDGMENT---|---EVAL---|$)/);
+        const judgmentMatch = text.match(/---JUDGMENT---([\s\S]*?)---EVAL---/);
+        const evalMatch = text.match(/---EVAL---([\s\S]*?)---END---/);
 
         // Extract scene description and remove all markers
         let sceneDescription = '';

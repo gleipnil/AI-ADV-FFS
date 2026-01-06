@@ -42,29 +42,11 @@ export function generateWorld(
         alive: true
     }));
 
-    // クリア条件生成（1-2個をランダム選択）
-    const clearCount = Math.floor(Math.random() * 2) + 1; // 1-2個
-    const selectedClearConditions = [...template.baseClearConditions]
-        .sort(() => Math.random() - 0.5)
-        .slice(0, clearCount);
-
-    const clearConditions: Condition[] = selectedClearConditions.map((desc, index) => ({
-        id: `clear_${index}`,
-        description: desc,
-        met: false
-    }));
-
-    // 失敗条件生成（1-2個をランダム選択）
-    const failCount = Math.floor(Math.random() * 2) + 1; // 1-2個
-    const selectedFailConditions = [...template.baseFailConditions]
-        .sort(() => Math.random() - 0.5)
-        .slice(0, failCount);
-
-    const failConditions: Condition[] = selectedFailConditions.map((desc, index) => ({
-        id: `fail_${index}`,
-        description: desc,
-        met: false
-    }));
+    // クリア条件は直接テンプレートから使用（既にCondition[]形式）
+    const clearConditions = {
+        normal: template.baseClearConditions.normal.map(condition => ({ ...condition })),
+        perfect: template.baseClearConditions.perfect.map(condition => ({ ...condition }))
+    };
 
     return {
         templateId: template.id,
@@ -73,8 +55,7 @@ export function generateWorld(
         themeTags,
         locations,
         npcs,
-        clearConditions,
-        failConditions
+        clearConditions
     };
 }
 
@@ -118,7 +99,11 @@ export function generateWorldContext(world: WorldInstance): string {
     const themes = world.themeTags.join('、');
     const locationNames = world.locations.map(l => l.name).join('、');
     const npcNames = world.npcs.map(n => `${n.name}（${n.role}）`).join('、');
-    const clearConds = world.clearConditions.map(c => c.description).join(' / ');
+
+    // Normal条件のみをクリア条件として表示（Perfectは隠し目標）
+    const clearConds = world.clearConditions.normal
+        .map(c => c.description)
+        .join(' / ');
 
     return `【世界情報】
 世界名: ${world.name}
@@ -126,7 +111,7 @@ export function generateWorldContext(world: WorldInstance): string {
 テーマ: ${themes}
 ロケーション: ${locationNames}
 登場NPC: ${npcNames}
-クリア条件: ${clearConds}
+クリア条件のヒント: ${clearConds}
 
 この世界のルールと雰囲気を一貫して描写すること。`;
 }

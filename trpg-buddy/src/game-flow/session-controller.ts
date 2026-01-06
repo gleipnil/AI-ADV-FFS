@@ -1,12 +1,13 @@
 // World template system integrated
 
-import type { GameState, GMResponse } from '../types';
+import type { GameState, GMResponse, JudgmentRequest, JudgmentResult, JudgmentParams } from '../types';
 import { EndingType } from '../types';
 import type { GeminiClient } from '../ai-gm/gemini-client';
 import type { TrustManager } from '../buddy/trust-manager';
 import { generateWorld } from '../world-templates/generator';
 import { SceneManager } from '../scene-management/scene-manager';
 import { evaluateClearConditions, determineEndingType, shouldPreventEarlyClear } from './condition-evaluator';
+import { executeJudgment } from '../judgment/judgment-engine';
 
 export class SessionController {
     private sceneManager: SceneManager;
@@ -74,6 +75,19 @@ export class SessionController {
     async processTurn(state: GameState, playerInput: string): Promise<GMResponse> {
         console.log(`SessionController: Processing turn ${state.turnNumber}...`);
 
+        // 【A】保留中の判定がある場合
+        if (state.pendingJudgment) {
+            // プレイヤーが判定実行を選択したか確認
+            if (this.isJudgmentExecutionCommand(playerInput)) {
+                return await this.executeAndNarratePendingJudgment(state);
+            } else {
+                // 別の行動を選択 → 判定キャンセル
+                console.log('SessionController: Judgment cancelled, player chose different action');
+                state.pendingJudgment = undefined;
+                // 通常のターン処理へ
+            }
+        }
+
         // Add player input to history
         state.buddy.dialogueHistory.push({
             speaker: 'player',
@@ -93,15 +107,10 @@ export class SessionController {
             });
         }
 
-        // Evaluate clear/fail conditions
-        const {
-            evaluateClearConditions,
-            evaluateFailConditions,
-            isAnyConditionMet,
-            shouldPreventEarlyClear
-        } = await import('./condition-evaluator');
-
         const combinedResponse = `${response.sceneDescription || ''} ${response.buddyDialogue || ''}`;
+
+        // Evaluate clear conditions
+        evaluateClearConditions(state, playerInput, combinedResponse);
 
         // Accumulate progression score
         state.cumulativeProgression += response.internalEvaluation.progressionScore;
@@ -180,9 +189,67 @@ export class SessionController {
 
         const isInClimax = state.cumulativeProgression >= 70;
         const isUnresolved =
-            !state.currentWorld.clearConditions.some(c => c.met) &&
-            !state.currentWorld.failConditions.some(c => c.met);
+            !state.currentWorld.clearConditions.normal.some(c => c.met) &&
+            !state.currentWorld.clearConditions.perfect.some(c => c.met);
 
         return isInClimax && isUnresolved;
+    }
+
+    private isJudgmentExecutionCommand(input: string): boolean {
+        const commands = ['判定', '判定する', 'ロール', '挑む', 'やる'];
+        const normalized = input.toLowerCase();
+        return commands.some(cmd => normalized.includes(cmd));
+    }
+
+    private async executeAndNarratePendingJudgment(state: GameState): Promise<GMResponse> {
+        const pending = state.pendingJudgment!;
+        console.log('SessionController: Executing pending judgment');
+
+        // 1. 判定実行
+        const judgmentResult = this.executeJudgmentCheck(pending.request, state);
+
+        // 2. AI GMに結果を通知して描写生成
+        const narrative = await this.geminiClient.generateJudgmentNarrative(
+            state,
+            pending.request,
+            judgmentResult
+        );
+
+        // 3. 保留中の判定をクリア
+        state.pendingJudgment = undefined;
+
+        // 4. プレイヤーの行動を履歴に追加
+        state.buddy.dialogueHistory.push({
+            speaker: 'player',
+            content: '判定に挑んだ',
+            turn: state.turnNumber
+        });
+
+        // 5. 応答を構築
+        return {
+            sceneDescription: narrative,
+            judgmentResult: judgmentResult,
+            internalEvaluation: {
+                trustChange: 0,
+                progressionScore: 1,
+                stagnationFlag: false,
+                endingFlags: { shouldEnd: false }
+            }
+        };
+    }
+
+    private executeJudgmentCheck(
+        request: JudgmentRequest,
+        state: GameState
+    ): JudgmentResult {
+        const params: JudgmentParams = {
+            requiredAbility: request.requiredAbility,
+            difficulty: request.difficulty,
+            playerAbilities: [],
+            buddyAbilities: state.buddy.abilities,
+            context: request.context
+        };
+
+        return executeJudgment(params);
     }
 }
