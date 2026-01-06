@@ -88,11 +88,10 @@ export class GeminiClient {
     }
 
     async generateJudgmentNarrative(
-        gameState: GameState,
         request: JudgmentRequest,
         result: JudgmentResult
     ): Promise<string> {
-        const prompt = this.buildJudgmentNarrativePrompt(gameState, request, result);
+        const prompt = this.buildJudgmentNarrativePrompt(request, result);
 
         try {
             const aiResponse = await this.model.generateContent(prompt);
