@@ -1,4 +1,5 @@
 import type { GameState, GMResponse, JudgmentResult } from '../types';
+import { Difficulty } from '../types';
 
 export class MainScreen {
   private headerEl: HTMLElement;
@@ -186,10 +187,14 @@ export class MainScreen {
       'stealth': '隠密', 'crafting': '工作', 'knowledge': '学問',
       'observation': '観察', 'persuasion': '話術', 'intimidation': '威圧', 'medicine': '医術'
     };
-    const difficultyNames = { 'EASY': '易', 'NORMAL': '中', 'HARD': '難' };
+    const difficultyNames = {
+      [Difficulty.EASY]: '易',
+      [Difficulty.NORMAL]: '中',
+      [Difficulty.HARD]: '難'
+    };
 
     const abilityJa = abilityNames[pending.request.requiredAbility] || pending.request.requiredAbility;
-    const difficultyJa = difficultyNames[pending.request.difficulty as keyof typeof difficultyNames] || pending.request.difficulty;
+    const difficultyJa = difficultyNames[pending.request.difficulty] || '中';
 
     this.mainContentEl.innerHTML += `
       <div class="pending-judgment">
