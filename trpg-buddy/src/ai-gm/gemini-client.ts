@@ -204,20 +204,31 @@ ${playerInput}
 9. 数値は表示しない
 10. **プレイヤーが気づいていない異常性は直接説明しない**（兆候や違和感として示す）
 
-【判定システム】
+【判定システム - 重要】
 プレイヤーの行動が判定を必要とする場合（戦闘、技能使用、困難な行動など）:
-1. 判定が必要と判断したら、---JUDGMENT---セクションで指定
-2. 必要な能力を指定: 剣術/体術/射撃/隠密/工作/学問/観察/話術/威圧/医術
-3. 難易度を指定: 易/中/難
-4. システムが自動でダイスロールを行う
-5. 結果（成功/失敗/ファンブル/クリティカル）を受け取る
-6. **結果を物語的に描写する**（数値は表示しない）
 
-判定結果の描写例:
-- 成功: 「刃が閃き、敵の防御を突き破る！」
-- 失敗: 「だが、敵は軽やかにそれをかわす」
-- ファンブル: 「足を滑らせ、短剣が手から飛んでいく！」
-- クリティカル: 「完璧な一撃が敵の急所を捉えた！」
+**事前予告方式**:
+1. **まず情景描写で状況を説明**
+2. **判定が必要なことを明示**: 「〜するには【能力名判定(難易度:X)】が必要だ」
+3. **---JUDGMENT---セクションで判定情報を出力**
+
+⚠️ 重要: **判定はまだ実行されていません**。プレイヤーは次のターンで:
+- 「判定する」と入力して判定実行
+- アイテムを使って有利にする（将来実装）
+- 別の方法を試す
+を選択できます。
+
+判定が必要な行動例:
+- 戦闘行動（剣術/体術/射撃）
+- 障害物の克服（体術）
+- ものの製作・修理（工作）
+- 情報収集・調査（学問/観察）
+- 交渉・説得（話術/威圧）
+- 治療（医術）
+- 隠れる・忍び込む（隠密）
+
+判定不要な行動例:
+- 移動、会話、単純な観察、通常のアイテム使用
 
 以下の形式で出力してください:
 ---SCENE---
@@ -357,9 +368,9 @@ ${endingInstruction}
         let judgment: JudgmentRequest | undefined = undefined;
         if (judgmentMatch) {
             const judgmentText = judgmentMatch[1];
-            const abilityMatch = judgmentText.match(/ability:\\s*(\\S+)/);
-            const difficultyMatch = judgmentText.match(/difficulty:\\s*(\\S+)/);
-            const contextMatch = judgmentText.match(/context:\\s*(.+)/);
+            const abilityMatch = judgmentText.match(/ability:\s*(\S+)/);
+            const difficultyMatch = judgmentText.match(/difficulty:\s*(\S+)/);
+            const contextMatch = judgmentText.match(/context:\s*(.+)/);
 
             if (abilityMatch && abilityMatch[1] !== 'none') {
                 // Map Japanese ability name to AbilityId
@@ -405,10 +416,10 @@ ${endingInstruction}
 
         if (evalMatch) {
             const evalText = evalMatch[1];
-            const trustChangeMatch = evalText.match(/trustChange:\\s*(-?\\d+)/);
-            const progressionMatch = evalText.match(/progressionScore:\\s*(\\d+)/);
-            const shouldEndMatch = evalText.match(/shouldEnd:\\s*(true|false)/);
-            const endingTypeMatch = evalText.match(/endingType:\\s*(\\w+)/);
+            const trustChangeMatch = evalText.match(/trustChange:\s*(-?\d+)/);
+            const progressionMatch = evalText.match(/progressionScore:\s*(\d+)/);
+            const shouldEndMatch = evalText.match(/shouldEnd:\s*(true|false)/);
+            const endingTypeMatch = evalText.match(/endingType:\s*(\w+)/);
 
             if (trustChangeMatch) evaluation.trustChange = parseInt(trustChangeMatch[1]);
             if (progressionMatch) evaluation.progressionScore = parseInt(progressionMatch[1]);
