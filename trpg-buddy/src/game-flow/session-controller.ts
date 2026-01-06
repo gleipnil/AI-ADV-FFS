@@ -206,7 +206,14 @@ export class SessionController {
             turn: state.turnNumber
         });
 
-        // 5. 応答を構築
+        // 5. GMの判定結果描写を履歴に追加（重要：次のターンでAIがこの結果を知るため）
+        state.buddy.dialogueHistory.push({
+            speaker: 'gm',
+            content: narrative,
+            turn: state.turnNumber
+        });
+
+        // 6. 応答を構築
         return {
             sceneDescription: narrative,
             judgmentResult: judgmentResult,
