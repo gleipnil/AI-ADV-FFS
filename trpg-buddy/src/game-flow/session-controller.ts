@@ -160,6 +160,14 @@ export class SessionController {
             state.buddy.warnings++;
         }
 
+        // 【C】新しい判定リクエストがあれば保存
+        if (response.judgment) {
+            state.pendingJudgment = {
+                request: response.judgment,
+                context: response.sceneDescription || ''
+            };
+        }
+
         // Check turn limit with climax extension
         const isClimaxExtensionActive = this.shouldExtendForClimax(state);
         const effectiveTurnLimit = isClimaxExtensionActive ? 23 : 20;

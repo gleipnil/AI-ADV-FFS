@@ -345,7 +345,7 @@ ${endingInstruction}
 描写を書いてください:`;
     }
 
-    private parseGMResponse(text: string): GMResponse {
+    parseGMResponse(text: string): GMResponse {
         // Parse structured response
         const sceneMatch = text.match(/---SCENE---([\s\S]*?)(?:---BUDDY---|---JUDGMENT---|---EVAL---|$)/);
         const buddyMatch = text.match(/---BUDDY---([\s\S]*?)(?:---JUDGMENT---|---EVAL---|$)/);
@@ -401,7 +401,7 @@ ${endingInstruction}
                     judgment = {
                         requiredAbility: abilityMap[abilityJa],
                         difficulty: difficultyMap[difficultyJa] || Difficulty.NORMAL,
-                        context: contextMatch ? contextMatch[1].trim() : 'プレイヤーの行動'
+                        context: contextMatch ? contextMatch[1].trim() : ''
                     };
                 }
             }
