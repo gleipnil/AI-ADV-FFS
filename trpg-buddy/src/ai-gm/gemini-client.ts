@@ -174,10 +174,10 @@ ${buildPromptOutputExample({
 
     private buildTurnPrompt(gameState: GameState, playerInput: string): string {
         const worldContext = generateWorldContext(gameState.currentWorld);
-        const sceneDescription = this.sceneManager.formatSceneContext(gameState.currentScene, gameState);
+        const sceneDescription = this.sceneManager.getSceneContext(gameState.currentScene);
 
-        // 最近の履歴（直近5ターン）
-        const recentHistory = gameState.buddy.dialogueHistory
+        // 最近の履歴（直近10ターン）
+        const historyText = gameState.buddy.dialogueHistory
             .slice(-10)
             .map(h => `${h.speaker === 'player' ? 'プレイヤー' : 'GM'}: ${h.content}`)
             .join('\n');
