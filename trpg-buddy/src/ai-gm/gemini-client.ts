@@ -174,27 +174,39 @@ ${buildPromptOutputExample({
 
     private buildTurnPrompt(gameState: GameState, playerInput: string): string {
         const worldContext = generateWorldContext(gameState.currentWorld);
-        const recentHistory = gameState.buddy.dialogueHistory.slice(-5);
-        const historyText = recentHistory.map(d =>
-            `[${d.speaker}] ${d.content} `
-        ).join('\n');
+        const sceneDescription = this.sceneManager.formatSceneContext(gameState.currentScene, gameState);
 
-        // 早期クリア抑止のための指示
-        const earlyPreventionNote = gameState.turnNumber <= 10
-            ? '\n⚠️ 重要: 現在前半10ターン以内です。クリア条件達成が近づいている場合、その直前に困難な障害や予期せぬ展開を挿入し、プレイヤーがそれを乗り越える必要があるようにしてください。'
+        // 最近の履歴（直近5ターン）
+        const recentHistory = gameState.buddy.dialogueHistory
+            .slice(-10)
+            .map(h => `${h.speaker === 'player' ? 'プレイヤー' : 'GM'}: ${h.content}`)
+            .join('\n');
+
+        // Early prevention or climax urgency notes
+        const earlyPreventionNote = gameState.turnNumber <= 10 && gameState.cumulativeProgression >= 15
+            ? '\n⚠️ 注意: まだ序盤です。クリアに近づきすぎている場合は、困難な障害を設けてください。'
             : '';
 
-        // クライマックス延長時の緊急指示
-        const climaxUrgencyNote = gameState.turnNumber >= 20
-            ? '\n🔥 緊急: ターン23が最終ターンです。このターンまたは次のターンで必ず決着をつけてください。クリア条件達成またはゲームオーバーに向けて加速してください。'
+        const climaxUrgencyNote = gameState.turnNumber >= 18
+            ? `\n⚠️ 重要: 現在${gameState.turnNumber}ターン目です。クライマックスに向けて物語を収束させてください。`
             : '';
 
         return `あなたはTRPGのゲームマスター（GM）です。
 プレイヤーの行動に対して応答してください。
 
+## バディキャラクター設定（厳守）
+**${ARIA_CHARACTER.name}**
+- 年齢: ${ARIA_CHARACTER.age}歳
+- 外見: ${ARIA_CHARACTER.appearance}
+- 性格: ${ARIA_CHARACTER.personality}
+- 口調: ${ARIA_CHARACTER.speechPattern}
+- セリフ例: ${ARIA_CHARACTER.speechExamples.join('、')}
+
+**重要**: バディのセリフは必ず上記の口調を守ること。明るく元気な口調や、礼儀正しすぎる口調は禁止。
+
 ${worldContext}
 
-${this.sceneManager.getSceneContext(gameState.currentScene)}
+${sceneDescription}
 
 【現在の状況】
 - セッション: ${gameState.sessionNumber}
