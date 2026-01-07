@@ -160,14 +160,14 @@ ${worldContext}
     - 異常性タグの内容をそのまま説明文として使用
 
 以下の形式で出力してください:
---- SCENE-- -
+---SCENE---
 【五感で感じる情景描写。プレイヤーとバディが目を覚ました場所の様子】
---- BUDDY-- -
+---BUDDY---
 【バディのセリフ（セリフのみ、名前は不要）】
---- EVAL-- -
+---EVAL---
     trustChange: 0
 progressionScore: 0
---- END-- - `;
+---END---`;
     }
 
     private buildTurnPrompt(gameState: GameState, playerInput: string): string {
@@ -248,20 +248,19 @@ ${playerInput}
 - 移動、会話、単純な観察、通常のアイテム使用
 
 以下の形式で出力してください:
---- SCENE-- -
-【情景描写をここに】
---- BUDDY-- -
-【バディのセリフをここに（セリフのみ）】
---- JUDGMENT-- -
-    ability: [剣術 / 体術 / 射撃 / 隠密 / 工作 / 学問 / 観察 / 話術 / 威圧 / 医術 から選択、または none]
-difficulty: [易 / 中 / 難、判定不要な場合は指定不要]
-context: [判定の状況説明、判定不要な場合は指定不要]
---- EVAL-- -
-    trustChange: [数値]
-progressionScore: [0 - 10]
-shouldEnd: [true / false]
-endingType: [clear / fail / なし]
---- END-- - `;
+---SCENE---
+情景描写をここに
+---BUDDY---
+バディのセリフを ここに（セリフのみ、名前は不要）
+---JUDGMENT---
+    ability: 剣術|体術|射撃|隠密|工作|学問|観察|話術|威圧|医術（から選択、または none）
+    difficulty: 易|中|難（判定不要な場合は指定不要）
+    context: 判定の状況説明（判定不要な場合は指定不要）
+---EVAL---
+    trustChange: -5～5
+progressionScore: 0-5
+shouldEnd: なし|clear|fail
+---END---`;
     }
 
     private buildJudgmentNarrativePrompt(
