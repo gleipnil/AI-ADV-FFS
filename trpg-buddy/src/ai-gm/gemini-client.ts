@@ -419,6 +419,13 @@ ${endingInstruction}
             sceneDescription = beforeMarkers.replace(/---SCENE---/g, '').trim();
         }
 
+        // 🔴 重要: 全ての内部マーカーを除去（EVALセクションがプレイヤーに見えないようにする）
+        sceneDescription = sceneDescription
+            .replace(/---EVAL---[\s\S]*?---END---/g, '')  // EVAL~ENDブロック全体を削除
+            .replace(/---JUDGMENT---[\s\S]*/g, '')        // JUDGMENT以降を削除
+            .replace(/---END---/g, '')                     // 残ったENDマーカーを削除
+            .trim();
+
         const buddyDialogue = buddyMatch ? buddyMatch[1].trim() : undefined;
 
         // Parse judgment request (if any)
