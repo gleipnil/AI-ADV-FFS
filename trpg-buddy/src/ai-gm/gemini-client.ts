@@ -6,6 +6,7 @@ import { Difficulty } from '../types';
 import { getAbilityNameJa, getDifficultyNameJa } from '../judgment/judgment-engine';
 import { generateWorldContext } from '../world-templates/generator';
 import { SceneManager } from '../scene-management/scene-manager';
+import { buildPromptOutputExample, MARKERS, MARKER_PATTERNS, EVAL_FORMAT } from './prompt-markers';
 
 // ========================================
 // アリアのキャラクター設定（統一定義）
@@ -160,14 +161,15 @@ ${worldContext}
     - 異常性タグの内容をそのまま説明文として使用
 
 以下の形式で出力してください:
----SCENE---
-【五感で感じる情景描写。プレイヤーとバディが目を覚ました場所の様子】
----BUDDY---
-【バディのセリフ（セリフのみ、名前は不要）】
----EVAL---
-    trustChange: 0
-progressionScore: 0
----END---`;
+${buildPromptOutputExample({
+            includeJudgment: false,
+            evalValues: {
+                trustChange: 'trustChange: 0',
+                progressionScore: 'progressionScore: 0',
+                shouldEnd: 'shouldEnd: false',
+                endingType: ''
+            }
+        })}`;
     }
 
     private buildTurnPrompt(gameState: GameState, playerInput: string): string {
@@ -248,20 +250,7 @@ ${playerInput}
 - 移動、会話、単純な観察、通常のアイテム使用
 
 以下の形式で出力してください:
----SCENE---
-情景描写をここに
----BUDDY---
-バディのセリフを ここに（セリフのみ、名前は不要）
----JUDGMENT---
-    ability: 剣術|体術|射撃|隠密|工作|学問|観察|話術|威圧|医術（から選択、または none）
-    difficulty: 易|中|難（判定不要な場合は指定不要）
-    context: 判定の状況説明（判定不要な場合は指定不要）
----EVAL---
-    trustChange: -5～5
-    progressionScore: 0-5
-    shouldEnd: true|false
-    endingType: clear|fail（shouldEndがtrueの場合のみ）
----END---`;
+${buildPromptOutputExample({ includeJudgment: true })}`;
     }
 
     private buildJudgmentNarrativePrompt(
@@ -403,11 +392,11 @@ ${endingInstruction}
     }
 
     parseGMResponse(text: string): GMResponse {
-        // Parse structured response
-        const sceneMatch = text.match(/---SCENE---([\s\S]*?)(?:---BUDDY---|---JUDGMENT---|---EVAL---|$)/);
-        const buddyMatch = text.match(/---BUDDY---([\s\S]*?)(?:---JUDGMENT---|---EVAL---|$)/);
-        const judgmentMatch = text.match(/---JUDGMENT---([\s\S]*?)---EVAL---/);
-        const evalMatch = text.match(/---EVAL---([\s\S]*?)---END---/);
+        // Parse structured response using centralized patterns
+        const sceneMatch = text.match(MARKER_PATTERNS.SCENE);
+        const buddyMatch = text.match(MARKER_PATTERNS.BUDDY);
+        const judgmentMatch = text.match(MARKER_PATTERNS.JUDGMENT);
+        const evalMatch = text.match(MARKER_PATTERNS.EVAL);
 
         // Extract scene description and remove all markers
         let sceneDescription = '';
@@ -415,16 +404,14 @@ ${endingInstruction}
             sceneDescription = sceneMatch[1].trim();
         } else {
             // Fallback: extract everything before first marker
-            const beforeMarkers = text.split(/---(?:BUDDY|JUDGMENT|EVAL)---/)[0];
-            sceneDescription = beforeMarkers.replace(/---SCENE---/g, '').trim();
+            const markerPattern = new RegExp(`(?:${MARKERS.BUDDY}|${MARKERS.JUDGMENT}|${MARKERS.EVAL})`);
+            const beforeMarkers = text.split(markerPattern)[0];
+            sceneDescription = beforeMarkers.replace(new RegExp(MARKERS.SCENE, 'g'), '').trim();
         }
 
         // 🔴 重要: 全ての内部マーカーを除去（EVALセクションがプレイヤーに見えないようにする）
-        sceneDescription = sceneDescription
-            .replace(/---EVAL---[\s\S]*?---END---/g, '')  // EVAL~ENDブロック全体を削除
-            .replace(/---JUDGMENT---[\s\S]*/g, '')        // JUDGMENT以降を削除
-            .replace(/---END---/g, '')                     // 残ったENDマーカーを削除
-            .trim();
+        const allMarkersPattern = new RegExp(`${MARKERS.EVAL}[\\s\\S]*?${MARKERS.END}|${MARKERS.JUDGMENT}[\\s\\S]*|${MARKERS.END}`, 'g');
+        sceneDescription = sceneDescription.replace(allMarkersPattern, '').trim();
 
         const buddyDialogue = buddyMatch ? buddyMatch[1].trim() : undefined;
 
@@ -480,10 +467,12 @@ ${endingInstruction}
 
         if (evalMatch) {
             const evalText = evalMatch[1];
-            const trustChangeMatch = evalText.match(/trustChange:\s*(-?\d+)/);
-            const progressionMatch = evalText.match(/progressionScore:\s*(\d+)/);
-            const shouldEndMatch = evalText.match(/shouldEnd:\s*(true|false)/);
-            const endingTypeMatch = evalText.match(/endingType:\s*(\w+)/);
+
+            // Use centralized EVAL_FORMAT patterns
+            const trustChangeMatch = evalText.match(EVAL_FORMAT.trustChange.pattern);
+            const progressionMatch = evalText.match(EVAL_FORMAT.progressionScore.pattern);
+            const shouldEndMatch = evalText.match(EVAL_FORMAT.shouldEnd.pattern);
+            const endingTypeMatch = evalText.match(EVAL_FORMAT.endingType.pattern);
 
             if (trustChangeMatch) evaluation.trustChange = parseInt(trustChangeMatch[1]);
             if (progressionMatch) evaluation.progressionScore = parseInt(progressionMatch[1]);
@@ -493,6 +482,8 @@ ${endingInstruction}
                     evaluation.endingFlags.endingType = endingTypeMatch[1];
                 }
             }
+        } else {
+            console.warn('GeminiClient: EVAL section not found in response, using defaults');
         }
 
         return {
