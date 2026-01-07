@@ -258,8 +258,9 @@ ${playerInput}
     context: 判定の状況説明（判定不要な場合は指定不要）
 ---EVAL---
     trustChange: -5～5
-progressionScore: 0-5
-shouldEnd: なし|clear|fail
+    progressionScore: 0-5
+    shouldEnd: true|false
+    endingType: clear|fail（shouldEndがtrueの場合のみ）
 ---END---`;
     }
 
