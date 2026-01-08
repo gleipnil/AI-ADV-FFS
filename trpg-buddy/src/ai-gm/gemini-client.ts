@@ -7,28 +7,26 @@ import { getAbilityNameJa } from '../judgment/judgment-engine';
 import { generateWorldContext } from '../world-templates/generator';
 import { SceneManager } from '../scene-management/scene-manager';
 import { buildPromptOutputExample, MARKERS, MARKER_PATTERNS, EVAL_FORMAT } from './prompt-markers';
+import { ARIA_CHARACTER } from './constants';
 
-// ========================================
-// アリアのキャラクター設定（統一定義）
-// ========================================
-const ARIA_CHARACTER = {
-    name: 'アリア',
-    age: 12,
-    appearance: '白に近い銀髪のショートカット、青灰色の瞳、小柄で華奢な体型',
-    personality: '慎重で内気、優しく思いやりがある。初対面では緊張するが、信頼すると心を開く',
-    speechPattern: '控えめで丁寧。語尾は「...うん」「〇〇、かな」「ありがとう...」など',
-    speechExamples: [
-        '...うん、わかった',
-        'だいじょうぶ、かな',
-        'ありがとう...',
-        'ごめんなさい...',
-        'あの...ね'
-    ]
-} as const;
 
+/**
+ * GeminiClient - AI Game Master powered by Google Gemini
+ * 
+ * Responsibilities:
+ * 1. API Communication: Interact with Google Generative AI
+ * 2. Prompt Generation: Build context-aware prompts for different game situations
+ * 3. Response Parsing: Extract structured data from AI responses
+ * 4. Roleplay Evaluation: Assess player actions for bonus/penalty
+ * 
+ * Architecture Notes:
+ * - This class is currently monolithic (597 lines)
+ * - Future refactoring: Extract PromptBuilder and ResponseParser
+ * - See: gemini_client_refactoring_plan.md for details
+ */
 export class GeminiClient {
     private genAI: GoogleGenerativeAI;
-    private model: any;
+    private model: any; // TODO: Type as GenerativeModel when @google/generative-ai exports it
     private sceneManager: SceneManager;
 
     constructor(apiKey: string) {
@@ -36,6 +34,17 @@ export class GeminiClient {
         this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
         this.sceneManager = new SceneManager();
     }
+
+    // ========================================
+    // PUBLIC API: Core Generation Methods
+    // ========================================
+
+    /**
+     * Generate opening scene for a new game session
+     * @param gameState Current game state with world context
+     * @param playerName Player's name
+     * @returns GM response with scene description and buddy dialogue
+     */
 
     async generateOpening(gameState: GameState, playerName: string = 'プレイヤー'): Promise<GMResponse> {
         const prompt = this.buildOpeningPrompt(gameState, playerName);
@@ -212,6 +221,18 @@ REASON: 慎重に構造を確認するという具体的なアプローチで、
         return { level, modifier, reasoning };
     }
 
+    // ========================================
+    // PRIVATE: Prompt Generation Methods
+    // ========================================
+    // These methods build context-aware prompts for different game situations.
+    // Future refactoring: Extract to PromptBuilder class
+
+    /**
+     * Build prompt for opening scene generation
+     * @param gameState Initial game state with world context
+     * @param playerName Player's name
+     * @returns Formatted prompt string
+     */
     private buildOpeningPrompt(gameState: GameState, playerName: string): string {
         const worldContext = generateWorldContext(gameState.currentWorld);
 
@@ -255,6 +276,12 @@ ${buildPromptOutputExample({
         })}`;
     }
 
+    /**
+     * Build prompt for turn-based GM response
+     * @param gameState Current game state
+     * @param playerInput Player's action or dialogue
+     * @returns Formatted prompt string with game context
+     */
     private buildTurnPrompt(gameState: GameState, playerInput: string): string {
         const worldContext = generateWorldContext(gameState.currentWorld);
         const sceneDescription = this.sceneManager.getSceneContext(gameState.currentScene);
@@ -344,6 +371,13 @@ ${playerInput}
 ${buildPromptOutputExample({ includeJudgment: true })}`;
     }
 
+    /**
+     * Build prompt for judgment narrative generation
+     * @param request Judgment context
+     * @param result Dice judgment result
+     * @param playerIntent Optional player's strategic description
+     * @returns Formatted prompt string
+     */
     private buildJudgmentNarrativePrompt(request: JudgmentRequest, result: JudgmentResult, playerIntent?: string): string {
         // Ability and difficulty labels
         const abilityNames: Record<string, string> = {
@@ -425,6 +459,12 @@ ${result.isFumble ? '\n**重要**: ファンブルを印象的に描写。予想
 上記の形式で、臨場感のある描写を3-5文で生成してください。`;
     }
 
+    /**
+     * Build prompt for ending scene generation
+     * @param gameState Final game state
+     * @param endingType Type of ending (perfect/normal/survival/breakdown)
+     * @returns Formatted prompt string
+     */
     private buildEndingPrompt(gameState: GameState, endingType: 'perfect' | 'normal' | 'survival' | 'breakdown'): string {
         const worldContext = generateWorldContext(gameState.currentWorld);
 
