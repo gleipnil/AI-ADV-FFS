@@ -1,11 +1,4 @@
 /* ========================================
-   Imports - Retro Fonts
-   ======================================== */
-@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
-
-/* ... 既存のCSS ... */
-
-/* ========================================
    Judgment Mode Toggle Switch
    ======================================== */
 
@@ -83,57 +76,49 @@
 }
 
 /* ========================================
-   Input Container Mode Switching
+   Input Area Mode Switching
    ======================================== */
 
-.input-container {
-  transition: background-color 0.3s ease, border-color 0.3s ease;
+#input-area {
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 /* 行動モード（デフォルト） */
-.input-container[data-mode="action"] {
-  background-color: #000;
-  border: 2px solid #00ff00;
-  padding: 10px;
+#input-area[data-mode="action"] {
+  background-color: transparent;
 }
 
-.input-container[data-mode="action"] .input-prompt {
+#input-area[data-mode="action"] .input-prompt,
+#input-area[data-mode="action"] input {
   color: #00ff00;
-}
-
-.input-container[data-mode="action"] input {
-  background-color: #000;
-  color: #00ff00;
-  border: 1px solid #00ff00;
 }
 
 /* 判定モード */
-.input-container[data-mode="judgment"] {
+#input-area[data-mode="judgment"] {
   background-color: #1a0033;
   border: 2px solid #ff00ff;
   padding: 10px;
   box-shadow: 0 0 15px rgba(255, 0, 255, 0.3);
+  margin: -10px;
+  /* padding分を相殺 */
 }
 
-.input-container[data-mode="judgment"] .input-prompt {
+#input-area[data-mode="judgment"] .input-prompt {
   color: #ffff00;
   text-shadow: 0 0 5px #ffff00;
 }
 
-.input-container[data-mode="judgment"] input {
+#input-area[data-mode="judgment"] input {
   background-color: #1a0033;
   color: #ffff00;
   border: 1px solid #ff00ff;
 }
 
-.input-container[data-mode="judgment"] input::placeholder {
+#input-area[data-mode="judgment"] input::placeholder {
   color: rgba(255, 255, 0, 0.5);
 }
 
-/* ========================================
-   Judgment Hint Styling
-   ======================================== */
-
+/* 判定ヒント styling */
 .judgment-hint {
   margin-top: 12px;
   padding: 8px;
@@ -141,10 +126,10 @@
   border-left: 3px solid #00ff00;
   font-size: 0.9rem;
   color: #00ff00;
+  transition: all 0.3s ease;
 }
 
-.input-container[data-mode="judgment"] ~ .pending-judgment .judgment-hint,
-.toggle-switch[data-mode="judgment"] ~ .judgment-hint {
+.toggle-switch[data-mode="judgment"]~.judgment-hint {
   background: rgba(255, 0, 255, 0.1);
   border-left: 3px solid #ff00ff;
   color: #ff00ff;

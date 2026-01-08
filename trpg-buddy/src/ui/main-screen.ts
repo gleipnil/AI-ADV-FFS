@@ -7,12 +7,16 @@ export class MainScreen {
   private statusBarEl: HTMLElement;
   private inputAreaEl: HTMLElement;
   private inputCallback: ((input: string) => void) | null = null;
+  private toggleSwitchInitialized = false;  // イベント委譲の初期化フラグ
 
   constructor() {
     this.headerEl = document.getElementById('header')!;
     this.mainContentEl = document.getElementById('main-content')!;
     this.statusBarEl = document.getElementById('status-bar')!;
     this.inputAreaEl = document.getElementById('input-area')!;
+
+    // イベント委譲：親要素にリスナーを1回だけ設定
+    this.initializeToggleSwitchDelegation();
   }
 
   render(): void {
@@ -358,46 +362,71 @@ export class MainScreen {
   // ========================================
 
   initializeToggleSwitch(gameState: GameState): void {
-    const toggleAction = document.getElementById('toggle-action');
-    const toggleJudgment = document.getElementById('toggle-judgment');
+    // DOMが完全に描画されるまで少し待つ
+    setTimeout(() => {
+      const toggleAction = document.getElementById('toggle-action');
+      const toggleJudgment = document.getElementById('toggle-judgment');
 
-    if (!toggleAction || !toggleJudgment || !gameState.pendingJudgment) return;
+      console.log('[Toggle] Initializing...', {
+        hasAction: !!toggleAction,
+        hasJudgment: !!toggleJudgment,
+        hasPending: !!gameState.pendingJudgment
+      });
 
-    // デフォルトは行動モード
-    gameState.pendingJudgment.uiMode = 'action';
-    this.updateToggleUI('action', gameState);
-
-    toggleAction.addEventListener('click', () => {
-      if (gameState.pendingJudgment) {
-        gameState.pendingJudgment.uiMode = 'action';
-        this.updateToggleUI('action', gameState);
+      if (!toggleAction || !toggleJudgment || !gameState.pendingJudgment) {
+        console.warn('[Toggle] Elements not found or no pending judgment');
+        return;
       }
-    });
 
-    toggleJudgment.addEventListener('click', () => {
-      if (gameState.pendingJudgment) {
-        gameState.pendingJudgment.uiMode = 'judgment';
-        this.updateToggleUI('judgment', gameState);
-      }
-    });
+      // デフォルトは行動モード
+      gameState.pendingJudgment.uiMode = 'action';
+      this.updateToggleUI('action', gameState);
+
+      // イベントリスナー設定
+      toggleAction.addEventListener('click', () => {
+        console.log('[Toggle] Action button clicked');
+        if (gameState.pendingJudgment) {
+          gameState.pendingJudgment.uiMode = 'action';
+          this.updateToggleUI('action', gameState);
+        }
+      });
+
+      toggleJudgment.addEventListener('click', () => {
+        console.log('[Toggle] Judgment button clicked');
+        if (gameState.pendingJudgment) {
+          gameState.pendingJudgment.uiMode = 'judgment';
+          this.updateToggleUI('judgment', gameState);
+        }
+      });
+
+      console.log('[Toggle] Event listeners attached successfully');
+    }, 100);  // 100ms待機
   }
 
   private updateToggleUI(mode: 'action' | 'judgment', gameState: GameState): void {
     const toggleSwitch = document.querySelector('.toggle-switch');
     const toggleAction = document.getElementById('toggle-action');
     const toggleJudgment = document.getElementById('toggle-judgment');
-    const inputContainer = document.querySelector('.input-container') as HTMLElement;
+    const inputArea = document.getElementById('input-area');  // 実際の要素ID
     const inputPrompt = document.getElementById('input-prompt');
     const modeHint = document.getElementById('mode-hint');
 
-    if (!toggleSwitch || !inputContainer) return;
+    console.log('[Toggle] Updating UI to mode:', mode, {
+      hasSwitch: !!toggleSwitch,
+      hasInputArea: !!inputArea
+    });
+
+    if (!toggleSwitch || !inputArea) {
+      console.warn('[Toggle] Required elements not found');
+      return;
+    }
 
     if (mode === 'judgment') {
       // 判定モード
       toggleSwitch.setAttribute('data-mode', 'judgment');
       toggleAction?.classList.remove('active');
       toggleJudgment?.classList.add('active');
-      inputContainer.setAttribute('data-mode', 'judgment');
+      inputArea.setAttribute('data-mode', 'judgment');
 
       // プロンプト変更
       if (inputPrompt && gameState.pendingJudgment) {
@@ -424,7 +453,7 @@ export class MainScreen {
       toggleSwitch.setAttribute('data-mode', 'action');
       toggleAction?.classList.add('active');
       toggleJudgment?.classList.remove('active');
-      inputContainer.setAttribute('data-mode', 'action');
+      inputArea.setAttribute('data-mode', 'action');
 
       if (inputPrompt) {
         inputPrompt.textContent = '> あなたの行動を入力してください:';
