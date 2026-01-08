@@ -108,9 +108,10 @@ export class GeminiClient {
 
     async generateJudgmentNarrative(
         request: JudgmentRequest,
-        result: JudgmentResult
+        result: JudgmentResult,
+        playerIntent?: string  // プレイヤーの具体的な行動意図（オプション）
     ): Promise<string> {
-        const prompt = this.buildJudgmentNarrativePrompt(request, result);
+        const prompt = this.buildJudgmentNarrativePrompt(request, result, playerIntent);
 
         try {
             const aiResponse = await this.model.generateContent(prompt);
@@ -261,17 +262,25 @@ ${playerInput}
 ${buildPromptOutputExample({ includeJudgment: true })}`;
     }
 
-    private buildJudgmentNarrativePrompt(
-        request: JudgmentRequest,
-        result: JudgmentResult
-    ): string {
-        const abilityJa = getAbilityNameJa(request.requiredAbility);
-        const difficultyJa = getDifficultyNameJa(request.difficulty);
-        const resultType = result.isCritical ? 'クリティカル成功' :
-            result.isFumble ? 'ファンブル（致命的失敗）' :
-                result.success ? '成功' : '失敗';
+    private buildJudgmentNarrativePrompt(request: JudgmentRequest, result: JudgmentResult, playerIntent?: string): string {
+        // Ability and difficulty labels
+        const abilityNames: Record<string, string> = {
+            'swordsmanship': '剣術', 'martialArts': '体術', 'shooting': '射撃',
+            'stealth': '隠密', 'crafting': '工作', 'knowledge': '学問',
+            'observation': '観察', 'persuasion': '話術', 'intimidation': '威圧', 'medicine': '医術'
+        };
+        const difficultyLabels = { [Difficulty.EASY]: '易', [Difficulty.NORMAL]: '中', [Difficulty.HARD]: '難' };
+        const abilityJa = abilityNames[request.requiredAbility] || request.requiredAbility;
+        const difficultyJa = difficultyLabels[request.difficulty];
 
-        return `# 判定結果の描写生成
+        const resultType = result.isCritical ? '**クリティカル成功**' :
+            result.isFumble ? '**ファンブル（大失敗）**' :
+                result.success ? '**成功**' : '**失敗**';
+
+        // プレイヤーの意図を追加
+        const intentSection = playerIntent ? `\n\n## プレイヤーの行動意図\n${playerIntent}\n（この意図を反映した描写にすること）` : '';
+
+        return `あなたは判定結果の描写を生成します。必ず以下の設定と指示に従ってください。
 
 ## キャラクター設定（厳守）
 **${ARIA_CHARACTER.name}**（バディ）
@@ -290,6 +299,7 @@ ${buildPromptOutputExample({ includeJudgment: true })}`;
 - ダイス: ${result.roll}
 - 目標値: ${result.threshold}
 - 結果: **${resultType}**
+${intentSection}
 
 ## 出力要件（必須）
 1. **判定の結果を3-4文で描写**

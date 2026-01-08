@@ -83,12 +83,13 @@ export class SessionController {
 
         // 【A】保留中の判定がある場合
         if (state.pendingJudgment) {
-            // プレイヤーが判定実行を選択したか確認
-            if (this.isJudgmentExecutionCommand(playerInput)) {
-                return await this.executeAndNarratePendingJudgment(state);
+            // UIモードをチェック（トグルスイッチ対応）
+            if (state.pendingJudgment.uiMode === 'judgment') {
+                console.log('SessionController: Executing judgment (mode: judgment)');
+                return await this.executeAndNarratePendingJudgment(state, playerInput);
             } else {
-                // 別の行動を選択 → 判定キャンセル
-                console.log('SessionController: Judgment cancelled, player chose different action');
+                // 行動モードの場合は判定キャンセル
+                console.log('SessionController: Judgment cancelled, player chose different action (mode: action)');
                 state.pendingJudgment = undefined;
                 // 通常のターン処理へ
             }
@@ -178,23 +179,18 @@ export class SessionController {
         return response;
     }
 
-    private isJudgmentExecutionCommand(input: string): boolean {
-        const commands = ['判定', '判定する', 'ロール', '挑む', 'やる'];
-        const normalized = input.toLowerCase();
-        return commands.some(cmd => normalized.includes(cmd));
-    }
-
-    private async executeAndNarratePendingJudgment(state: GameState): Promise<GMResponse> {
+    private async executeAndNarratePendingJudgment(state: GameState, playerIntent: string): Promise<GMResponse> {
         const pending = state.pendingJudgment!;
-        console.log('SessionController: Executing pending judgment');
+        console.log('SessionController: Executing pending judgment with intent:', playerIntent);
 
         // 1. 判定実行
         const judgmentResult = this.executeJudgmentCheck(pending.request, state);
 
-        // 2. AI GMに結果を通知して描写生成
+        // 2. AI GMに結果とプレイヤーの意図を通知して描写生成
         const narrative = await this.geminiClient.generateJudgmentNarrative(
             pending.request,
-            judgmentResult
+            judgmentResult,
+            playerIntent  // プレイヤーの具体的な行動意図を渡す
         );
 
         // 3. 保留中の判定をクリア
