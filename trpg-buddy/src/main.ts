@@ -1,5 +1,6 @@
 import './ui/retro-cui.css';
 import './ui/retro-cui-toggle.css';
+import './ui/roleplay-bonus.css';
 import { GameEngine } from './game-engine';
 
 console.log('記憶のカケラを辿る - AI TRPG');

@@ -1,6 +1,6 @@
 // World template system integrated
 
-import type { GameState, GMResponse, JudgmentRequest, JudgmentResult, JudgmentParams } from '../types';
+import type { GameState, GMResponse, JudgmentRequest, JudgmentResult, JudgmentParams, RoleplayBonus } from '../types';
 import type { GeminiClient } from '../ai-gm/gemini-client';
 import type { TrustManager } from '../buddy/trust-manager';
 import type { SaveManager } from '../save-system/save-manager';

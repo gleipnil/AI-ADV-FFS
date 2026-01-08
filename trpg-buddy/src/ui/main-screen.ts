@@ -248,11 +248,35 @@ export class MainScreen {
       result.isFumble ? '【ファンブル...】' :
         result.success ? '【成功】' : '【失敗】';
 
+    // ロールプレイボーナス表示
+    let bonusHtml = '';
+    if (result.roleplayBonus && result.roleplayBonus.level !== 0) {
+      const bonus = result.roleplayBonus;
+      const bonusClass = bonus.level > 0 ? 'bonus-positive' : 'bonus-negative';
+      const bonusIcon = bonus.level > 0 ? '✨' : '⚠️';
+
+      bonusHtml = `
+        <div class="roleplay-bonus ${bonusClass}">
+          <div class="bonus-header">${bonusIcon} ロールプレイ評価</div>
+          <div class="bonus-level">難易度調整: ${bonus.level > 0 ? '+' : ''}${bonus.level}</div>
+          <div class="bonus-reasoning">${this.escapeHtml(bonus.reasoning)}</div>
+        </div>
+      `;
+    }
+
+    // 目標値表示（ボーナス込み）
+    let thresholdDisplay = `${result.threshold}`;
+    if (result.baseThreshold && result.roleplayBonus && result.roleplayBonus.modifier !== 0) {
+      const sign = result.roleplayBonus.modifier > 0 ? '+' : '';
+      thresholdDisplay = `${result.baseThreshold} ${sign}${result.roleplayBonus.modifier} = ${result.threshold}`;
+    }
+
     this.mainContentEl.innerHTML += `
       <div class="judgment-result ${resultClass}">
         <div class="judgment-header">🎲 判定結果</div>
+        ${bonusHtml}
         <div class="judgment-dice">
-          ダイス: ${result.roll} / 目標値: ${result.threshold}
+          ダイス: ${result.roll} / 目標値: ${thresholdDisplay}
         </div>
         <div class="judgment-outcome">${resultText}</div>
       </div>
