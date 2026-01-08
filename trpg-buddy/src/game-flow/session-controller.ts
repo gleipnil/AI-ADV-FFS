@@ -183,34 +183,41 @@ export class SessionController {
         const pending = state.pendingJudgment!;
         console.log('SessionController: Executing pending judgment with intent:', playerIntent);
 
-        // 1. 判定実行
-        const judgmentResult = this.executeJudgmentCheck(pending.request, state);
+        // 1. ロールプレイボーナス評価（AI）
+        const roleplayBonus = await this.geminiClient.evaluateRoleplayBonus(
+            playerIntent,
+            pending.request
+        );
+        console.log('Roleplay bonus evaluated:', roleplayBonus);
 
-        // 2. AI GMに結果とプレイヤーの意図を通知して描写生成
+        // 2. 判定実行（ボーナス込み）
+        const judgmentResult = this.executeJudgmentCheck(pending.request, state, roleplayBonus);
+
+        // 3. AI GMに結果とプレイヤーの意図を通知して描写生成
         const narrative = await this.geminiClient.generateJudgmentNarrative(
             pending.request,
             judgmentResult,
-            playerIntent  // プレイヤーの具体的な行動意図を渡す
+            playerIntent
         );
 
-        // 3. 保留中の判定をクリア
+        // 4. 保留中の判定をクリア
         state.pendingJudgment = undefined;
 
-        // 4. プレイヤーの行動を履歴に追加
+        // 5. プレイヤーの行動を履歴に追加
         state.buddy.dialogueHistory.push({
             speaker: 'player',
             content: '判定に挑んだ',
             turn: state.turnNumber
         });
 
-        // 5. GMの判定結果描写を履歴に追加（重要：次のターンでAIがこの結果を知るため）
+        // 6. GMの判定結果描写を履歴に追加（重要：次のターンでAIがこの結果を知るため）
         state.buddy.dialogueHistory.push({
             speaker: 'gm',
             content: narrative,
             turn: state.turnNumber
         });
 
-        // 6. 応答を構築
+        // 7. 応答を構築
         return {
             sceneDescription: narrative,
             judgmentResult: judgmentResult,
@@ -225,7 +232,8 @@ export class SessionController {
 
     private executeJudgmentCheck(
         request: JudgmentRequest,
-        state: GameState
+        state: GameState,
+        roleplayBonus?: RoleplayBonus
     ): JudgmentResult {
         const params: JudgmentParams = {
             requiredAbility: request.requiredAbility,
@@ -235,6 +243,6 @@ export class SessionController {
             context: request.context
         };
 
-        return executeJudgment(params);
+        return executeJudgment(params, roleplayBonus);
     }
 }

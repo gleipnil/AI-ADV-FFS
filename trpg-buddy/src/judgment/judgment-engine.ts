@@ -1,6 +1,6 @@
 // Judgment engine for ability checks
 
-import type { AbilityId, AbilityCount, JudgmentParams, JudgmentResult } from '../types';
+import type { AbilityId, AbilityCount, JudgmentParams, JudgmentResult, RoleplayBonus } from '../types';
 import { Difficulty } from '../types';
 import { roll2D6, isFumble, isCritical, describeDiceRoll } from './dice';
 
@@ -59,7 +59,7 @@ function calculateSuccessThreshold(
 /**
  * Execute a judgment check
  */
-export function executeJudgment(params: JudgmentParams): JudgmentResult {
+export function executeJudgment(params: JudgmentParams, roleplayBonus?: RoleplayBonus): JudgmentResult {
     console.log(`Judgment: ${params.requiredAbility} (${params.difficulty}) - ${params.context}`);
 
     // Determine ability match
@@ -70,7 +70,11 @@ export function executeJudgment(params: JudgmentParams): JudgmentResult {
     );
 
     // Calculate success threshold
-    const threshold = calculateSuccessThreshold(params.difficulty, matchType);
+    const baseThreshold = calculateSuccessThreshold(params.difficulty, matchType);
+
+    // Apply roleplay bonus (modifier is negative for positive levels)
+    const bonusModifier = roleplayBonus?.modifier || 0;
+    const threshold = Math.max(2, Math.min(12, baseThreshold + bonusModifier));
 
     // Roll dice
     const diceRoll = roll2D6();
@@ -80,8 +84,10 @@ export function executeJudgment(params: JudgmentParams): JudgmentResult {
     const critical = isCritical(diceRoll);
     const success = critical || (!fumble && diceRoll >= threshold);
 
-    console.log(`  Roll: ${describeDiceRoll(diceRoll)} vs Threshold: ${threshold}`);
-    console.log(`  Match: ${matchType}, Result: ${success ? 'SUCCESS' : 'FAILURE'}`);
+    console.log(`  Roll: ${describeDiceRoll(diceRoll)} vs Threshold: ${threshold} (base: ${baseThreshold}${bonusModifier !== 0 ? `, bonus: ${bonusModifier > 0 ? '+' : ''}${bonusModifier}` : ''})`);
+    if (roleplayBonus && roleplayBonus.level !== 0) {
+        console.log(`  Roleplay Bonus: Level ${roleplayBonus.level > 0 ? '+' : ''}${roleplayBonus.level} - ${roleplayBonus.reasoning}`);
+    }
 
     return {
         success,
@@ -89,6 +95,8 @@ export function executeJudgment(params: JudgmentParams): JudgmentResult {
         isCritical: critical,
         roll: diceRoll,
         threshold,
+        baseThreshold,
+        roleplayBonus,
         matchType,
         narrative: '' // AI GM will generate this
     };
