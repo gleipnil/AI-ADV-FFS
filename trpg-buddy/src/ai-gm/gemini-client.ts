@@ -3,7 +3,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { GameState, GMResponse, JudgmentRequest, JudgmentResult, AbilityId, InternalEvaluation, RoleplayBonus } from '../types';
 import { Difficulty } from '../types';
-import { getAbilityNameJa, getDifficultyNameJa } from '../judgment/judgment-engine';
+import { getAbilityNameJa } from '../judgment/judgment-engine';
 import { generateWorldContext } from '../world-templates/generator';
 import { SceneManager } from '../scene-management/scene-manager';
 import { buildPromptOutputExample, MARKERS, MARKER_PATTERNS, EVAL_FORMAT } from './prompt-markers';
