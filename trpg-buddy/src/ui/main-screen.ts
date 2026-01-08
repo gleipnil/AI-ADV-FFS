@@ -384,7 +384,9 @@ export class MainScreen {
         const gameState = (window as any).currentGameState;
         if (gameState?.pendingJudgment) {
           gameState.pendingJudgment.uiMode = 'action';
-          this.updateToggleUI('action', gameState);
+          // クリックされた要素から親のpending-judgmentを見つけて更新
+          const pendingJudgmentEl = target.closest('.pending-judgment');
+          this.updateToggleUIForElement(pendingJudgmentEl as HTMLElement, 'action', gameState);
         }
       }
 
@@ -394,7 +396,9 @@ export class MainScreen {
         const gameState = (window as any).currentGameState;
         if (gameState?.pendingJudgment) {
           gameState.pendingJudgment.uiMode = 'judgment';
-          this.updateToggleUI('judgment', gameState);
+          // クリックされた要素から親のpending-judgmentを見つけて更新
+          const pendingJudgmentEl = target.closest('.pending-judgment');
+          this.updateToggleUIForElement(pendingJudgmentEl as HTMLElement, 'judgment', gameState);
         }
       }
     });
@@ -413,19 +417,26 @@ export class MainScreen {
 
       // デフォルトは行動モード
       gameState.pendingJudgment.uiMode = 'action';
-      this.updateToggleUI('action', gameState);
-
+      // 最新のpending-judgment要素を取得して更新
+      const pendingJudgments = this.mainContentEl.querySelectorAll('.pending-judgment');
+      const latestJudgment = pendingJudgments[pendingJudgments.length - 1] as HTMLElement;
+      if (latestJudgment) {
+        this.updateToggleUIForElement(latestJudgment, 'action', gameState);
+      }
       console.log('[Toggle] Initialized with delegation pattern');
     }, 100);
   }
 
-  private updateToggleUI(mode: 'action' | 'judgment', gameState: GameState): void {
-    const toggleSwitch = document.querySelector('.toggle-switch');
-    const toggleAction = document.getElementById('toggle-action');
-    const toggleJudgment = document.getElementById('toggle-judgment');
-    const inputArea = document.getElementById('input-area');  // 実際の要素ID
+  // 特定のpending-judgment要素内のトグルUIを更新
+  private updateToggleUIForElement(parentEl: HTMLElement, mode: 'action' | 'judgment', gameState: GameState): void {
+    if (!parentEl) return;
+
+    const toggleSwitch = parentEl.querySelector('.toggle-switch');
+    const toggleAction = parentEl.querySelector('#toggle-action');
+    const toggleJudgment = parentEl.querySelector('#toggle-judgment');
+    const inputArea = document.getElementById('input-area');
     const inputPrompt = document.getElementById('input-prompt');
-    const modeHint = document.getElementById('mode-hint');
+    const modeHint = parentEl.querySelector('.judgment-hint');
 
     console.log('[Toggle] Updating UI to mode:', mode, {
       hasSwitch: !!toggleSwitch,
@@ -464,6 +475,8 @@ export class MainScreen {
       if (modeHint) {
         modeHint.textContent = '💡 例: 力任せに押す、慎重に構造を確認する...';
       }
+
+      console.log('[Toggle] Switched to JUDGMENT mode');
     } else {
       // 行動モード
       toggleSwitch.setAttribute('data-mode', 'action');
