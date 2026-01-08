@@ -160,6 +160,16 @@ export class MainScreen {
       this.displayPendingJudgment(gameState.pendingJudgment);
       // トグルスイッチの初期化
       this.initializeToggleSwitch(gameState);
+    } else {
+      // 判定が終了したら入力エリアを通常モードにリセット
+      const inputArea = document.getElementById('input-area');
+      const inputPrompt = document.getElementById('input-prompt');
+      if (inputArea) {
+        inputArea.setAttribute('data-mode', 'action');
+      }
+      if (inputPrompt) {
+        inputPrompt.textContent = '> あなたの行動を入力してください:';
+      }
     }
 
     // Buddy dialogue
