@@ -361,46 +361,52 @@ export class MainScreen {
   // Toggle Switch Management
   // ========================================
 
-  initializeToggleSwitch(gameState: GameState): void {
-    // DOMが完全に描画されるまで少し待つ
-    setTimeout(() => {
-      const toggleAction = document.getElementById('toggle-action');
-      const toggleJudgment = document.getElementById('toggle-judgment');
+  // イベント委譲：mainContentElに1回だけリスナーを設定（再レンダリング対応）
+  private initializeToggleSwitchDelegation(): void {
+    if (this.toggleSwitchInitialized) return;
 
-      console.log('[Toggle] Initializing...', {
-        hasAction: !!toggleAction,
-        hasJudgment: !!toggleJudgment,
-        hasPending: !!gameState.pendingJudgment
-      });
+    this.mainContentEl.addEventListener('click', (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
 
-      if (!toggleAction || !toggleJudgment || !gameState.pendingJudgment) {
-        console.warn('[Toggle] Elements not found or no pending judgment');
-        return;
+      // 行動ボタンクリック
+      if (target.id === 'toggle-action' || target.closest('#toggle-action')) {
+        console.log('[Toggle] Action button clicked via delegation');
+        const gameState = (window as any).currentGameState;
+        if (gameState?.pendingJudgment) {
+          gameState.pendingJudgment.uiMode = 'action';
+          this.updateToggleUI('action', gameState);
+        }
       }
+
+      // 判定ボタンクリック
+      if (target.id === 'toggle-judgment' || target.closest('#toggle-judgment')) {
+        console.log('[Toggle] Judgment button clicked via delegation');
+        const gameState = (window as any).currentGameState;
+        if (gameState?.pendingJudgment) {
+          gameState.pendingJudgment.uiMode = 'judgment';
+          this.updateToggleUI('judgment', gameState);
+        }
+      }
+    });
+
+    this.toggleSwitchInitialized = true;
+    console.log('[Toggle] Event delegation initialized');
+  }
+
+  // トグルスイッチの初期状態を設定（イベントリスナーは不要）
+  initializeToggleSwitch(gameState: GameState): void {
+    setTimeout(() => {
+      if (!gameState.pendingJudgment) return;
+
+      // GameStateをグローバルに保存（イベント委譲から参照するため）
+      (window as any).currentGameState = gameState;
 
       // デフォルトは行動モード
       gameState.pendingJudgment.uiMode = 'action';
       this.updateToggleUI('action', gameState);
 
-      // イベントリスナー設定
-      toggleAction.addEventListener('click', () => {
-        console.log('[Toggle] Action button clicked');
-        if (gameState.pendingJudgment) {
-          gameState.pendingJudgment.uiMode = 'action';
-          this.updateToggleUI('action', gameState);
-        }
-      });
-
-      toggleJudgment.addEventListener('click', () => {
-        console.log('[Toggle] Judgment button clicked');
-        if (gameState.pendingJudgment) {
-          gameState.pendingJudgment.uiMode = 'judgment';
-          this.updateToggleUI('judgment', gameState);
-        }
-      });
-
-      console.log('[Toggle] Event listeners attached successfully');
-    }, 100);  // 100ms待機
+      console.log('[Toggle] Initialized with delegation pattern');
+    }, 100);
   }
 
   private updateToggleUI(mode: 'action' | 'judgment', gameState: GameState): void {
