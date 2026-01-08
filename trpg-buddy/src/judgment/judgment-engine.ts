@@ -3,6 +3,7 @@
 import type { AbilityId, AbilityCount, JudgmentParams, JudgmentResult, RoleplayBonus } from '../types';
 import { Difficulty } from '../types';
 import { roll2D6, isFumble, isCritical, describeDiceRoll } from './dice';
+import { Logger } from '../utils/logger';
 
 /**
  * Determine ability match type
@@ -84,9 +85,9 @@ export function executeJudgment(params: JudgmentParams, roleplayBonus?: Roleplay
     const critical = isCritical(diceRoll);
     const success = critical || (!fumble && diceRoll >= threshold);
 
-    console.log(`  Roll: ${describeDiceRoll(diceRoll)} vs Threshold: ${threshold} (base: ${baseThreshold}${bonusModifier !== 0 ? `, bonus: ${bonusModifier > 0 ? '+' : ''}${bonusModifier}` : ''})`);
+    Logger.debug('JudgmentEngine', `Roll: ${describeDiceRoll(diceRoll)} vs Threshold: ${threshold} (base: ${baseThreshold}${bonusModifier !== 0 ? `, bonus: ${bonusModifier > 0 ? '+' : ''}${bonusModifier}` : ''})`);
     if (roleplayBonus && roleplayBonus.level !== 0) {
-        console.log(`  Roleplay Bonus: Level ${roleplayBonus.level > 0 ? '+' : ''}${roleplayBonus.level} - ${roleplayBonus.reasoning}`);
+        Logger.debug('JudgmentEngine', `Roleplay Bonus: Level ${roleplayBonus.level > 0 ? '+' : ''}${roleplayBonus.level} - ${roleplayBonus.reasoning}`);
     }
 
     return {

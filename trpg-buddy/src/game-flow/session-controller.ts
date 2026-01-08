@@ -9,6 +9,7 @@ import { SceneManager } from '../scene-management/scene-manager';
 import { evaluateClearConditions } from './condition-evaluator';
 import { executeJudgment } from '../judgment/judgment-engine';
 import { restoreAbilitiesFromGallery } from '../memory-fragments/award-logic';
+import { Logger } from '../utils/logger';
 
 export class SessionController {
     private sceneManager: SceneManager;
@@ -181,14 +182,14 @@ export class SessionController {
 
     private async executeAndNarratePendingJudgment(state: GameState, playerIntent: string): Promise<GMResponse> {
         const pending = state.pendingJudgment!;
-        console.log('SessionController: Executing pending judgment with intent:', playerIntent);
+        Logger.debug('SessionController', 'Executing pending judgment with intent', { playerIntent });
 
         // 1. ロールプレイボーナス評価（AI）
         const roleplayBonus = await this.geminiClient.evaluateRoleplayBonus(
             playerIntent,
             pending.request
         );
-        console.log('Roleplay bonus evaluated:', roleplayBonus);
+        Logger.debug('SessionController', 'Roleplay bonus evaluated', roleplayBonus);
 
         // 2. 判定実行（ボーナス込み）
         const judgmentResult = this.executeJudgmentCheck(pending.request, state, roleplayBonus);
