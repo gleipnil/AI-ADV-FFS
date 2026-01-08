@@ -2,15 +2,16 @@ import './ui/retro-cui.css';
 import './ui/retro-cui-toggle.css';
 import './ui/roleplay-bonus.css';
 import { GameEngine } from './game-engine';
+import { Logger } from './utils/logger';
 
-console.log('記憶のカケラを辿る - AI TRPG');
-console.log('Initializing game...');
+Logger.info('Main', '記憶のカケラを辿る - AI TRPG');
+Logger.info('Main', 'Initializing game...');
 
 // Check for API key
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 if (!apiKey || apiKey === 'your_api_key_here') {
-  console.error('⚠️ Gemini API key not found!');
-  console.log('Please create a .env file and set VITE_GEMINI_API_KEY');
+  Logger.error('Main', 'Gemini API key not found!');
+  Logger.info('Main', 'Please create a .env file and set VITE_GEMINI_API_KEY');
   document.getElementById('main-content')!.innerHTML = `
     <div class="error-message">
       <p>⚠️ API キーが設定されていません</p>
@@ -19,7 +20,7 @@ if (!apiKey || apiKey === 'your_api_key_here') {
     </div>
   `;
 } else {
-  console.log('✓ API key detected');
+  Logger.info('Main', '✓ API key detected');
 
   // Initialize game engine
   const gameEngine = new GameEngine(apiKey);
@@ -27,5 +28,5 @@ if (!apiKey || apiKey === 'your_api_key_here') {
   // Start game
   gameEngine.initialize();
 
-  console.log('Game engine initialized');
+  Logger.info('Main', 'Game engine initialized');
 }

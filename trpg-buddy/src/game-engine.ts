@@ -7,6 +7,7 @@ import { determineEndingType } from './game-flow/condition-evaluator';
 import { SaveManager } from './save-system/save-manager';
 import { MainScreen } from './ui/main-screen';
 import { awardFragment, grantAbilitiesFromFragments, hasFragment, persistFragment } from './memory-fragments/award-logic';
+import { Logger } from './utils/logger';
 
 export class GameEngine {
     private geminiClient: GeminiClient;
@@ -25,7 +26,7 @@ export class GameEngine {
     }
 
     async initialize(): Promise<void> {
-        console.log('GameEngine: Initializing...');
+        Logger.info('GameEngine', 'Initializing...');
 
         // Setup UI
         this.mainScreen.render();
@@ -33,7 +34,7 @@ export class GameEngine {
     }
 
     private async startNewGame(playerName: string): Promise<void> {
-        console.log(`GameEngine: Starting new game for player: ${playerName}...`);
+        Logger.info('GameEngine', `Starting new game for player: ${playerName}`);
         this.mainScreen.showLoading('世界を生成中...');
 
         try {
@@ -52,9 +53,9 @@ export class GameEngine {
             // Setup input handler
             this.mainScreen.onPlayerInput((input: string) => this.handlePlayerInput(input));
 
-            console.log('GameEngine: Game started successfully');
+            Logger.info('GameEngine', 'Game started successfully');
         } catch (error) {
-            console.error('GameEngine: Failed to start game:', error);
+            Logger.error('GameEngine', 'Failed to start game', error);
             this.mainScreen.showError('ゲームの開始に失敗しました');
         }
     }
@@ -62,7 +63,7 @@ export class GameEngine {
     private async handlePlayerInput(input: string): Promise<void> {
         if (!this.gameState) return;
 
-        console.log(`GameEngine: Processing input: "${input}"`);
+        Logger.debug('GameEngine', `Processing input: "${input}"`);
         this.mainScreen.disableInput();
 
         try {
@@ -91,29 +92,29 @@ export class GameEngine {
             // Re-enable input
             this.mainScreen.enableInput();
         } catch (error) {
-            console.error('GameEngine: Turn processing failed:', error);
+            Logger.error('GameEngine', 'Turn processing failed', error);
             this.mainScreen.showError('処理に失敗しました');
             this.mainScreen.enableInput();
         }
     }
 
     private async handleSessionEnd(requestedEndingType?: 'breakdown'): Promise<void> {
-        console.log(`GameEngine: Session ending...`);
+        Logger.info('GameEngine', 'Session ending...');
 
         if (!this.gameState) return;
 
         // Determine actual ending type
         const endingType = requestedEndingType || determineEndingType(this.gameState);
-        console.log(`GameEngine: Ending type determined: ${endingType}`);
+        Logger.info('GameEngine', `Ending type determined: ${endingType}`);
 
         // Disable input during ending generation
         this.mainScreen.disableInput();
 
         try {
             // Generate AI ending scene
-            console.log('GameEngine: Generating ending scene...');
+            Logger.debug('GameEngine', 'Generating ending scene...');
             const endingScene = await this.geminiClient.generateEnding(this.gameState, endingType);
-            console.log('GameEngine: Ending scene generated');
+            Logger.debug('GameEngine', 'Ending scene generated');
 
             // Display ending scene
             this.mainScreen.showEndingScene(endingScene);
@@ -129,7 +130,7 @@ export class GameEngine {
                 );
 
                 if (fragment && !hasFragment(this.gameState.memoryFragments, fragment.id)) {
-                    console.log(`💎 記憶のカケラ獲得: ${fragment.title}`);
+                    Logger.info('GameEngine', `💎 記憶のカケラ獲得: ${fragment.title}`);
 
                     // 1. セッション内に記録
                     this.gameState.memoryFragments.push(fragment);
@@ -158,7 +159,7 @@ export class GameEngine {
                 this.mainScreen.showTitleScreen((playerName: string) => this.startNewGame(playerName));
             });
         } catch (error) {
-            console.error('GameEngine: Failed to generate ending:', error);
+            Logger.error('GameEngine', 'Failed to generate ending', error);
             // Show basic ending if AI fails
             this.mainScreen.showEndingScreen(endingType, () => {
                 this.gameState = null;
