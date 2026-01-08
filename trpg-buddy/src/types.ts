@@ -35,6 +35,7 @@ export interface GameState {
         request: JudgmentRequest;
         context: string;
         alternatives?: string[];
+        uiMode: 'action' | 'judgment';  // トグルスイッチのモード状態
     };
     sessionItems: NPCItem[]; // セッション内で入手したNPC固有アイテム
 }

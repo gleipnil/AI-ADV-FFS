@@ -154,6 +154,8 @@ export class MainScreen {
     // Pending judgment notice (if any)
     if (gameState.pendingJudgment) {
       this.displayPendingJudgment(gameState.pendingJudgment);
+      // トグルスイッチの初期化
+      this.initializeToggleSwitch(gameState);
     }
 
     // Buddy dialogue
@@ -201,8 +203,23 @@ export class MainScreen {
         <div class="judgment-notice">
           🎲 判定が必要: ${abilityJa}判定（難易度: ${difficultyJa}）
         </div>
-        <div class="judgment-hint">
-          💡 「判定する」と入力するか、別の方法を試すこともできます
+        
+        <!-- トグルスイッチ -->
+        <div class="judgment-mode-toggle">
+          <span class="toggle-label">モード:</span>
+          <div class="toggle-switch" data-mode="action">
+            <button id="toggle-action" class="toggle-btn active" aria-label="行動モード">
+              行動
+            </button>
+            <span class="toggle-slider"></span>
+            <button id="toggle-judgment" class="toggle-btn" aria-label="判定モード">
+              🎲 判定
+            </button>
+          </div>
+        </div>
+        
+        <div class="judgment-hint" id="mode-hint">
+          💡 別の方法を試すには「行動」を選択してください
         </div>
       </div>
     `;
@@ -230,8 +247,10 @@ export class MainScreen {
 
   renderInputArea(): void {
     this.inputAreaEl.innerHTML = `
-      <div class="input-prompt">&gt; あなたの行動を入力してください:</div>
-      <input type="text" id="player-input" placeholder="..." autocomplete="off" />
+      <div class="input-container" data-mode="action">
+        <div class="input-prompt" id="input-prompt">&gt; あなたの行動を入力してください:</div>
+        <input type="text" id="player-input" placeholder="..." autocomplete="off" />
+      </div>
     `;
 
     const inputEl = document.getElementById('player-input') as HTMLInputElement;
@@ -332,5 +351,88 @@ export class MainScreen {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  // ========================================
+  // Toggle Switch Management
+  // ========================================
+
+  initializeToggleSwitch(gameState: GameState): void {
+    const toggleAction = document.getElementById('toggle-action');
+    const toggleJudgment = document.getElementById('toggle-judgment');
+
+    if (!toggleAction || !toggleJudgment || !gameState.pendingJudgment) return;
+
+    // デフォルトは行動モード
+    gameState.pendingJudgment.uiMode = 'action';
+    this.updateToggleUI('action', gameState);
+
+    toggleAction.addEventListener('click', () => {
+      if (gameState.pendingJudgment) {
+        gameState.pendingJudgment.uiMode = 'action';
+        this.updateToggleUI('action', gameState);
+      }
+    });
+
+    toggleJudgment.addEventListener('click', () => {
+      if (gameState.pendingJudgment) {
+        gameState.pendingJudgment.uiMode = 'judgment';
+        this.updateToggleUI('judgment', gameState);
+      }
+    });
+  }
+
+  private updateToggleUI(mode: 'action' | 'judgment', gameState: GameState): void {
+    const toggleSwitch = document.querySelector('.toggle-switch');
+    const toggleAction = document.getElementById('toggle-action');
+    const toggleJudgment = document.getElementById('toggle-judgment');
+    const inputContainer = document.querySelector('.input-container') as HTMLElement;
+    const inputPrompt = document.getElementById('input-prompt');
+    const modeHint = document.getElementById('mode-hint');
+
+    if (!toggleSwitch || !inputContainer) return;
+
+    if (mode === 'judgment') {
+      // 判定モード
+      toggleSwitch.setAttribute('data-mode', 'judgment');
+      toggleAction?.classList.remove('active');
+      toggleJudgment?.classList.add('active');
+      inputContainer.setAttribute('data-mode', 'judgment');
+
+      // プロンプト変更
+      if (inputPrompt && gameState.pendingJudgment) {
+        const abilityNames: Record<string, string> = {
+          'swordsmanship': '剣術', 'martialArts': '体術', 'shooting': '射撃',
+          'stealth': '隠密', 'crafting': '工作', 'knowledge': '学問',
+          'observation': '観察', 'persuasion': '話術', 'intimidation': '威圧', 'medicine': '医術'
+        };
+        const difficultyNames = {
+          [Difficulty.EASY]: '易',
+          [Difficulty.NORMAL]: '中',
+          [Difficulty.HARD]: '難'
+        };
+        const abilityJa = abilityNames[gameState.pendingJudgment.request.requiredAbility] || '';
+        const difficultyJa = difficultyNames[gameState.pendingJudgment.request.difficulty] || '中';
+        inputPrompt.textContent = `🎲 どのように【${abilityJa}】判定（難易度：${difficultyJa}）に挑みますか？`;
+      }
+
+      if (modeHint) {
+        modeHint.textContent = '💡 例: 力任せに押す、慎重に構造を確認する...';
+      }
+    } else {
+      // 行動モード
+      toggleSwitch.setAttribute('data-mode', 'action');
+      toggleAction?.classList.add('active');
+      toggleJudgment?.classList.remove('active');
+      inputContainer.setAttribute('data-mode', 'action');
+
+      if (inputPrompt) {
+        inputPrompt.textContent = '> あなたの行動を入力してください:';
+      }
+
+      if (modeHint) {
+        modeHint.textContent = '💡 別の方法を試すには「行動」を選択してください';
+      }
+    }
   }
 }

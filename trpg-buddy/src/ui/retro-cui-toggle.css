@@ -1,0 +1,151 @@
+/* ========================================
+   Imports - Retro Fonts
+   ======================================== */
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+/* ... 既存のCSS ... */
+
+/* ========================================
+   Judgment Mode Toggle Switch
+   ======================================== */
+
+/* トグルスイッチコンテナ */
+.judgment-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+  padding: 8px 12px;
+  background: rgba(0, 255, 0, 0.05);
+  border: 1px solid #00ff00;
+  border-radius: 4px;
+}
+
+.toggle-label {
+  color: #00ff00;
+  font-size: 1.1rem;
+  min-width: 60px;
+}
+
+/* トグルスイッチ本体 */
+.toggle-switch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #0a0a0a;
+  border: 2px solid #00ff00;
+  border-radius: 20px;
+  padding: 2px;
+  height: 40px;
+  min-width: 200px;
+}
+
+.toggle-btn {
+  background: transparent;
+  border: none;
+  color: #00ff00;
+  padding: 6px 16px;
+  cursor: pointer;
+  font-family: 'VT323', monospace;
+  font-size: 1rem;
+  z-index: 2;
+  transition: color 0.3s ease;
+  position: relative;
+  flex: 1;
+}
+
+.toggle-btn:hover {
+  opacity: 0.8;
+}
+
+.toggle-btn.active {
+  color: #000;
+  font-weight: bold;
+}
+
+/* スライダー */
+.toggle-slider {
+  position: absolute;
+  background: #00ff00;
+  border-radius: 18px;
+  height: calc(100% - 4px);
+  width: calc(50% - 2px);
+  left: 2px;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  z-index: 1;
+}
+
+/* 判定モード時のスライダー */
+.toggle-switch[data-mode="judgment"] .toggle-slider {
+  transform: translateX(calc(100% + 2px));
+  background: #ff00ff;
+  box-shadow: 0 0 10px #ff00ff;
+}
+
+/* ========================================
+   Input Container Mode Switching
+   ======================================== */
+
+.input-container {
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* 行動モード（デフォルト） */
+.input-container[data-mode="action"] {
+  background-color: #000;
+  border: 2px solid #00ff00;
+  padding: 10px;
+}
+
+.input-container[data-mode="action"] .input-prompt {
+  color: #00ff00;
+}
+
+.input-container[data-mode="action"] input {
+  background-color: #000;
+  color: #00ff00;
+  border: 1px solid #00ff00;
+}
+
+/* 判定モード */
+.input-container[data-mode="judgment"] {
+  background-color: #1a0033;
+  border: 2px solid #ff00ff;
+  padding: 10px;
+  box-shadow: 0 0 15px rgba(255, 0, 255, 0.3);
+}
+
+.input-container[data-mode="judgment"] .input-prompt {
+  color: #ffff00;
+  text-shadow: 0 0 5px #ffff00;
+}
+
+.input-container[data-mode="judgment"] input {
+  background-color: #1a0033;
+  color: #ffff00;
+  border: 1px solid #ff00ff;
+}
+
+.input-container[data-mode="judgment"] input::placeholder {
+  color: rgba(255, 255, 0, 0.5);
+}
+
+/* ========================================
+   Judgment Hint Styling
+   ======================================== */
+
+.judgment-hint {
+  margin-top: 12px;
+  padding: 8px;
+  background: rgba(0, 255, 0, 0.1);
+  border-left: 3px solid #00ff00;
+  font-size: 0.9rem;
+  color: #00ff00;
+}
+
+.input-container[data-mode="judgment"] ~ .pending-judgment .judgment-hint,
+.toggle-switch[data-mode="judgment"] ~ .judgment-hint {
+  background: rgba(255, 0, 255, 0.1);
+  border-left: 3px solid #ff00ff;
+  color: #ff00ff;
+}

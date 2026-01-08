@@ -170,7 +170,8 @@ export class SessionController {
         if (response.judgment) {
             state.pendingJudgment = {
                 request: response.judgment,
-                context: response.sceneDescription || ''
+                context: response.sceneDescription || '',
+                uiMode: 'action'  // デフォルトは行動モード
             };
         }
 
