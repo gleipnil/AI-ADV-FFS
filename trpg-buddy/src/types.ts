@@ -182,6 +182,13 @@ export enum Difficulty {
 
 export type AbilityMatchType = 'withAbility' | 'withRelated' | 'withoutAbility';
 
+// Roleplay bonus evaluation
+export interface RoleplayBonus {
+    level: number;        // -2 ~ +2 の評価レベル
+    modifier: number;     // 目標値への修正値（-2 ~ +2）
+    reasoning: string;    // AIによる評価理由
+}
+
 export interface JudgmentParams {
     requiredAbility: AbilityId;
     difficulty: Difficulty;
