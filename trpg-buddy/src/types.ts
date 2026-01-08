@@ -203,6 +203,8 @@ export interface JudgmentResult {
     isCritical: boolean;
     roll: number;
     threshold: number;
+    baseThreshold?: number;         // ボーナス適用前の目標値
+    roleplayBonus?: RoleplayBonus;  // ロールプレイボーナス
     matchType: AbilityMatchType;
     narrative: string; // AI GMが生成する物語的描写
 }
